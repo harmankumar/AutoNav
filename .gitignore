@@ -4,5 +4,11 @@ opencv/
 opencv_contrib/
 python-aruco/
 swig/
+aruco-test/
+bin/
+include/
+lib/
+share/
 *.mp4
 *.pyc
+*.old
