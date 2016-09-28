@@ -35,7 +35,7 @@ if __name__ == '__main__':
     args.setdefault('--debug', './output/')
     args.setdefault('--square_size', 1.0)
     if not img_mask:
-        img_mask = './checkerboard-harman/calib*.jpg'
+        img_mask = './checkerboard-flycap/calib*.png'
     else:
         img_mask = img_mask[0]
 

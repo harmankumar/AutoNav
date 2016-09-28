@@ -7,7 +7,10 @@ import pyfly2
 if __name__ == '__main__':
     # load camera parameters
     camparam = aruco.CameraParameters()
-    # camparam.readFromXMLFile("cam_params.yml")
+    camparam.readFromXMLFile("cam_params.yml")
+
+    # Aruco marker size
+    marker_size = 0.17
 
     # create markerDetector object
     markerdetector = aruco.MarkerDetector()
@@ -46,12 +49,14 @@ if __name__ == '__main__':
                 if(marker.id == id_current):
                     marker_current = marker
                     marker.draw(frame, np.array([255, 255, 0]), 10, True)
-                    for i, point in enumerate(marker):
-                        print "Current"
-                        print i, point
+                    # for i, point in enumerate(marker):
+                    #     print "Current"
+                    #     print i, point
 
-            # transform_matrix = marker_current.calculateExtrinsics()
-            # print transform_matrix
+            marker_current.calculateExtrinsics(marker_size, camparam)
+            print "Id:", marker.id
+            print "Rvec:\n", marker.Rvec
+            print "Tvec:\n", marker.Tvec
 
         # show frame
         cv2.imshow("frame", frame)
