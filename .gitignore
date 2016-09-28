@@ -1,0 +1,8 @@
+aruco/
+build/
+opencv/
+opencv_contrib/
+python-aruco/
+swig/
+*.mp4
+*.pyc

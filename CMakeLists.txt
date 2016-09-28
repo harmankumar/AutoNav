@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8)
+project( detector )
+find_package( OpenCV REQUIRED )
+include_directories(/home/quantumcoder/Documents/car-project/include/opencv2)
+link_directories(/home/quantumcoder/Documents/car-project/lib)
+add_executable( detector detector.cpp )
+target_link_libraries( detector opencv_core opencv_highgui opencv_aruco)
