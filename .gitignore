@@ -7,8 +7,10 @@ swig/
 aruco-test/
 bin/
 include/
+test/cgbot/
 lib/
 share/
+output/
 *.mp4
 *.pyc
 *.old
