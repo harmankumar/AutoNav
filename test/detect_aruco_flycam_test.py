@@ -32,8 +32,9 @@ if __name__ == '__main__':
     while True:
         frame = camera.GrabNumPyImage('bgr')
 
-        # print "Processing video"
+        print "Processing"
         markers = markerdetector.detect(frame, camparam)
+        print "Markers detected: ", len(markers)
         if len(markers) > 0:
             # print "Found markers"
             id_list = [m.id for m in markers]
@@ -48,7 +49,7 @@ if __name__ == '__main__':
             for marker in markers:
                 if(marker.id == id_current):
                     marker_current = marker
-                    marker.draw(frame, np.array([255, 255, 0]), 10, True)
+                    # marker.draw(frame, np.array([255, 255, 0]), 10, True)
                     # for i, point in enumerate(marker):
                     #     print "Current"
                     #     print i, point
@@ -59,7 +60,7 @@ if __name__ == '__main__':
             print "Tvec:\n", marker.Tvec
 
         # show frame
-        cv2.imshow("frame", frame)
-        cv2.waitKey(10)
+        # cv2.imshow("frame", frame)
+        # cv2.waitKey(10)
 
     camera.StopCapture()
