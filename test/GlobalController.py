@@ -1,16 +1,21 @@
 # from detect_aruco_image import *
 from detect_aruco_flycam import *
 import time
+import math
 import sys
 import os
+import numpy as np
 import cgbot
 from cgbot.commands import cmd
 import subprocess
 from imports import WrapperForPointGray
 
-BOT_SPEED = 5000
-CUTOFF_DISTANCE = 1.0
-SLEEP_TIME = 0.01
+BOT_SPEED = 4000
+CUTOFF_DISTANCE = 1.3
+THRESHOLD_ANGLE = 0.1  # in radians
+TURN_AMT = 0.7
+TURN_TIME = 1.5
+SLEEP_TIME = 0.05
 
 
 def init():
@@ -22,10 +27,35 @@ def init():
     process4 = subprocess.call('cd /home/piyush/OpenCV3_Local/test', shell=True)
 
 
+# Calculates rotation matrix to euler angles
+# The result is the same as MATLAB except the order
+# of the euler angles ( x and z are swapped ).
+def rotationMatrixToEulerAngles(R):
+    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+
+    singular = sy < 1e-6
+
+    if not singular:
+        x = math.atan2(R[2, 1], R[2, 2])
+        y = math.atan2(-R[2, 0], sy)
+        z = math.atan2(R[1, 0], R[0, 0])
+    else:
+        x = math.atan2(-R[1, 2], R[1, 1])
+        y = math.atan2(-R[2, 0], sy)
+        z = 0
+
+    return np.array([x, y, z])
+
+
 def main():
 
     cmd.forward(speed=BOT_SPEED)
     time.sleep(SLEEP_TIME)
+
+    undetectedIterations = 0
+    turnState = 0
+    turnId = -1
+    prev_id = -1
 
     while(True):
 
@@ -36,23 +66,83 @@ def main():
         # Process markers
         print "Markers detected", len(markers)
         if len(markers) > 0:
-            for marker in markers:
-                # marker.draw(img, np.array([255, 0, 0]), 100, True)
-                # for i, point in enumerate(marker):
-                #     print i, point
+            undetectedIterations = 0
+            min_d = markers[0].Tvec[2][0]
+            marker = markers[0]
+            for m in markers:
+                m.calculateExtrinsics(marker_size, camparam)
+                current_distance = m.Tvec[2][0]
+                if (current_distance < min_d):
+                    min_d = current_distance
+                    marker = m
 
-                marker.calculateExtrinsics(marker_size, camparam)
+            # marker.draw(img, np.array([255, 0, 0]), 100, True)
+            # for i, point in enumerate(marker):
+            #     print i, point
 
-                print "Id:", marker.id
-                print "Rvec:\n", marker.Rvec
-                print "Tvec:\n", marker.Tvec
+            print "Id:", marker.id
+            # print "Rvec:\n", marker.Rvec
+            # print "Tvec:\n", marker.Tvec
+            print "Distance:\n", marker.Tvec[2][0]
 
-                # make an action according to detected marker.
-                if(marker.Tvec[2][0] < CUTOFF_DISTANCE):
-                    cmd.stop()
+            # make an action according to detected marker.
+            if(marker.Tvec[2][0] < CUTOFF_DISTANCE and not(turnId == marker.id) and turnState == 1):
+                print "******************"
+                print "Detected threshold"
+                print "******************"
+                turnState = turnState ^ 1
+                turnId = marker.id
+                print "Changed turnstate: ", turnState
+                cmd.turn(TURN_AMT)
+                cmd.turn(TURN_AMT)
+                cmd.turn(TURN_AMT)
+                time.sleep(TURN_TIME)
+                cmd.forward(speed=BOT_SPEED)
+            if(marker.Tvec[2][0] < CUTOFF_DISTANCE and not(turnId == marker.id) and turnState == 0):
+                print "******************"
+                print "Detected threshold"
+                print "******************"
+                turnState = turnState ^ 1
+                turnId = marker.id
+                print "Changed turnstate: ", turnState
+                cmd.turn(-TURN_AMT)
+                cmd.turn(-TURN_AMT)
+                cmd.turn(-TURN_AMT)
+                time.sleep(TURN_TIME)
+                cmd.forward(speed=BOT_SPEED)
 
-            # sleep
-            time.sleep(SLEEP_TIME)
+            # find angle with z axis
+            R = cv2.Rodrigues(marker.Rvec)
+            euler_angles = rotationMatrixToEulerAngles(R[0])
+            z_angle = euler_angles[1]
+            print "Z-angle: ", z_angle
+
+            CALIBRATION_TURN_AMT = 0.3
+            CALIBRATION_SLEEP_TIME = 0.3
+            if(z_angle < -THRESHOLD_ANGLE):
+                print "Calibration-> Right Turn"
+                cmd.turn(CALIBRATION_TURN_AMT)
+                cmd.turn(CALIBRATION_TURN_AMT)
+                cmd.turn(CALIBRATION_TURN_AMT)
+                time.sleep(CALIBRATION_SLEEP_TIME)
+                cmd.forward(speed=BOT_SPEED)
+            elif(z_angle > THRESHOLD_ANGLE):
+                print "Calibration-> Left Turn"
+                cmd.turn(-CALIBRATION_TURN_AMT)
+                cmd.turn(-CALIBRATION_TURN_AMT)
+                cmd.turn(-CALIBRATION_TURN_AMT)
+                time.sleep(CALIBRATION_SLEEP_TIME)
+                cmd.forward(speed=BOT_SPEED)
+            else:
+                cmd.forward(speed=BOT_SPEED)
+        else:
+            undetectedIterations = undetectedIterations + 1
+
+        if(undetectedIterations > 100):
+            cmd.stop()
+
+        # sleep
+        time.sleep(SLEEP_TIME)
 
 
 if __name__ == '__main__':

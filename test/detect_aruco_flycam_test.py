@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import aruco
 import pyfly2
-
+import time
 if __name__ == '__main__':
     # load camera parameters
     camparam = aruco.CameraParameters()
@@ -55,10 +55,10 @@ if __name__ == '__main__':
                     #     print i, point
 
             marker_current.calculateExtrinsics(marker_size, camparam)
-            print "Id:", marker.id
-            print "Rvec:\n", marker.Rvec
+            #print "Id:", marker.id
+            #print "Rvec:\n", marker.Rvec
             print "Tvec:\n", marker.Tvec
-
+	time.sleep(.7)
         # show frame
         # cv2.imshow("frame", frame)
         # cv2.waitKey(10)
