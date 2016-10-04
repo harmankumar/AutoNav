@@ -81,10 +81,10 @@ def moveTowardsTarget(Rvec, Tvec):
 
     # Find sign of z_angle
     l = len(calibrate_angle_list)
-    if(l < 10):
+    if(l < 3):
         return
     global calibrationDirection
-    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 10]):
+    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 3]):
         calibrationDirection = - calibrationDirection
     cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
     cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
@@ -148,11 +148,12 @@ def main():
             min_d = markers[0].Tvec[2][0]
             marker = markers[0]
             for m in markers:
-                m.calculateExtrinsics(marker_size, camparam)
-                current_distance = m.Tvec[2][0]
-                if (current_distance < min_d):
-                    min_d = current_distance
-                    marker = m
+                if(not(m in doneList)):
+                    m.calculateExtrinsics(marker_size, camparam)
+                    current_distance = m.Tvec[2][0]
+                    if (current_distance < min_d):
+                        min_d = current_distance
+                        marker = m
 
             # # Draw marker on observedframe image
             # marker.draw(frame, np.array([255, 0, 0]), 10, True)
@@ -182,7 +183,11 @@ def main():
                     toBreak = False
                     rotateAndMove(bool(turnState))
                     (frame, markers) = getMarkersFromCurrentFrame()
+                    global calibrate_angle_list
+                    calibrate_angle_list = []
                     doneList.append(marker.id)
+                    print "Added to doneList: ", marker.id
+                    print doneList
                     for marker in markers:
                         print "Seeing current marker"
                         if(not(marker.id in doneList)):
@@ -193,6 +198,7 @@ def main():
                         break
                 turnMode = False
                 calibrateMode = True
+                print "Exited turn mode"
                 cmd.forward(speed=BOT_SPEED)
                 # Change turnstate for next turn
                 turnState = turnState ^ 1
