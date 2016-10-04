@@ -63,9 +63,11 @@ def rotateAndMove(direction):
     # cmd.forward(speed=BOT_SPEED)
 
 calibrate_angle_list = []
-calibrationDirection = 0
+calibrationDirection = 1
 
 # move bot from current position, orientation towards given target
+
+
 def moveTowardsTarget(Rvec, Tvec):
     # Move towards the object for CALIBRATION_SLEEP_TIME
     CALIBRATION_TURN_AMT = 0.3
@@ -81,21 +83,26 @@ def moveTowardsTarget(Rvec, Tvec):
     l = len(calibrate_angle_list)
     if(l < 10):
         return
-    if(calibrate_angle_list[l-1] < calibrate_angle_list[l-10]):
-        z_angle = -z_angle
+    global calibrationDirection
+    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 10]):
+        calibrationDirection = - calibrationDirection
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    time.sleep(CALIBRATION_SLEEP_TIME)
 
-    if(z_angle < -THRESHOLD_ANGLE):
-        print "Calibration-> Right Turn"
-        cmd.turn(CALIBRATION_TURN_AMT)
-        cmd.turn(CALIBRATION_TURN_AMT)
-        cmd.turn(CALIBRATION_TURN_AMT)
-        time.sleep(CALIBRATION_SLEEP_TIME)
-    elif(z_angle > THRESHOLD_ANGLE):
-        print "Calibration-> Left Turn"
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        time.sleep(CALIBRATION_SLEEP_TIME)
+    # if(z_angle < -THRESHOLD_ANGLE):
+    #     print "Calibration-> Right Turn"
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     time.sleep(CALIBRATION_SLEEP_TIME)
+    # elif(z_angle > THRESHOLD_ANGLE):
+    #     print "Calibration-> Left Turn"
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     time.sleep(CALIBRATION_SLEEP_TIME)
     cmd.forward(speed=BOT_SPEED)
     time.sleep(CALIBRATION_SLEEP_TIME)
     return
@@ -147,8 +154,8 @@ def main():
                     min_d = current_distance
                     marker = m
 
-            # Draw marker on observedframe image
-            marker.draw(frame, np.array([255, 0, 0]), 10, True)
+            # # Draw marker on observedframe image
+            # marker.draw(frame, np.array([255, 0, 0]), 10, True)
 
             print "Id:", marker.id
             # print "Rvec:\n", marker.Rvec
