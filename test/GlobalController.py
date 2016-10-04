@@ -62,6 +62,8 @@ def rotateAndMove(direction):
     time.sleep(TURN_TIME)
     # cmd.forward(speed=BOT_SPEED)
 
+calibrate_angle_list = []
+
 # move bot from current position, orientation towards given target
 def moveTowardsTarget(Rvec, Tvec):
     # Move towards the object for CALIBRATION_SLEEP_TIME
@@ -72,8 +74,13 @@ def moveTowardsTarget(Rvec, Tvec):
     euler_angles = rotationMatrixToEulerAngles(R[0])
     z_angle = euler_angles[1]
     print "Z-angle: ", z_angle
+    calibrate_angle_list.append(z_angle)
 
-    if(z_angle < -THRESHOLD_ANGLE):
+    # if(z_angle < -THRESHOLD_ANGLE):
+    l = len(calibrate_angle_list)
+    if (l<10):
+        continue
+    if(calibrate_angle_list[l-1] - calibrate_angle_list[l-10]):
         print "Calibration-> Right Turn"
         cmd.turn(CALIBRATION_TURN_AMT)
         cmd.turn(CALIBRATION_TURN_AMT)
