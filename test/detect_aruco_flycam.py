@@ -30,7 +30,7 @@ def getMarkersFromCurrentFrame():
 
     # print "Processing video"
     markers = markerdetector.detect(frame, camparam)
-    return markers
+    return (frame, markers)
 
 # if __name__ == '__main__':
 #     # camera.StartCapture()

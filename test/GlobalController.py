@@ -11,7 +11,7 @@ import subprocess
 from imports import WrapperForPointGray
 
 BOT_SPEED = 4000
-CUTOFF_DISTANCE = 1.3
+CUTOFF_DISTANCE = 0.8
 THRESHOLD_ANGLE = 0.1  # in radians
 SLEEP_TIME = 0.05
 
@@ -48,8 +48,9 @@ def rotationMatrixToEulerAngles(R):
 # rotate bot (sharply) in given direction
 def rotateAndMove(direction):
     # turn by TURN_AMT for TURN_TIME
-    TURN_AMT = 0.7
-    TURN_TIME = 0.5
+    print "Turning"
+    TURN_AMT = 0.5
+    TURN_TIME = 0.3
     if direction:
         cmd.turn(TURN_AMT)
         cmd.turn(TURN_AMT)
@@ -61,18 +62,17 @@ def rotateAndMove(direction):
     time.sleep(TURN_TIME)
     # cmd.forward(speed=BOT_SPEED)
 
-
 # move bot from current position, orientation towards given target
 def moveTowardsTarget(Rvec, Tvec):
+    # Move towards the object for CALIBRATION_SLEEP_TIME
+    CALIBRATION_TURN_AMT = 0.3
+    CALIBRATION_SLEEP_TIME = 0.3
     # Get the orientation of the object using Rvec and Tvec
     R = cv2.Rodrigues(Rvec)
     euler_angles = rotationMatrixToEulerAngles(R[0])
     z_angle = euler_angles[1]
     print "Z-angle: ", z_angle
 
-    # Move towards the object for CALIBRATION_SLEEP_TIME
-    CALIBRATION_TURN_AMT = 0.3
-    CALIBRATION_SLEEP_TIME = 0.3
     if(z_angle < -THRESHOLD_ANGLE):
         print "Calibration-> Right Turn"
         cmd.turn(CALIBRATION_TURN_AMT)
@@ -86,6 +86,7 @@ def moveTowardsTarget(Rvec, Tvec):
         cmd.turn(-CALIBRATION_TURN_AMT)
         time.sleep(CALIBRATION_SLEEP_TIME)
     cmd.forward(speed=BOT_SPEED)
+    time.sleep(CALIBRATION_SLEEP_TIME)
     return
 
 
@@ -97,19 +98,30 @@ def main():
     global calibrateMode
     global turnMode
 
-    cmd.forward(speed=BOT_SPEED)
-    time.sleep(SLEEP_TIME)
-
     undetectedIterations = 0
     turnState = 0
     turnId = -1
+    doneList = []
     prev_id = -1
 
-    while(True):
+    # # Get rid of initial lag
+    # print "Initial"
+    # (frame, markers) = getMarkersFromCurrentFrame()
+    # if len(markers) > 0:
+    #     markers[0].draw(frame, np.array([255, 0, 0]), 10, True)
+    # cv2.imshow("frame", frame)
+    # cv2.waitKey(10)
+    # time.sleep(5)
 
+    print "Start bot"
+    cmd.forward(speed=BOT_SPEED)
+    time.sleep(SLEEP_TIME)
+
+    while(True):
+        print "Start loop"
         # get an image
         # markers = findImageArucoParams('ar2.png')
-        markers = getMarkersFromCurrentFrame()
+        (frame, markers) = getMarkersFromCurrentFrame()
 
         # Process markers
         print "Markers detected", len(markers)
@@ -124,8 +136,8 @@ def main():
                     min_d = current_distance
                     marker = m
 
-            # # Draw marker on observedframe image
-            # marker.draw(img, np.array([255, 0, 0]), 10, True)
+            # Draw marker on observedframe image
+            marker.draw(frame, np.array([255, 0, 0]), 10, True)
 
             print "Id:", marker.id
             # print "Rvec:\n", marker.Rvec
@@ -147,13 +159,20 @@ def main():
 
             if turnMode:
                 # ---------------- TURN MODE ---------------
-                turnId = marker.id
+                # turnId = marker.id
                 while True:
+                    toBreak = False
                     rotateAndMove(bool(turnState))
-                    markers = getMarkersFromCurrentFrame()
+                    (frame, markers) = getMarkersFromCurrentFrame()
+                    doneList.append(marker.id)
                     for marker in markers:
-                        if(not(marker.id == turnId)):
+                        print "Seeing current marker"
+                        if(not(marker.id in doneList)):
+                            print "Detected new marker"
+                            toBreak = True
                             break
+                    if(toBreak):
+                        break
                 turnMode = False
                 calibrateMode = True
                 cmd.forward(speed=BOT_SPEED)
@@ -166,6 +185,10 @@ def main():
 
         if(undetectedIterations > 100):
             cmd.stop()
+
+        # # show frame
+        # cv2.imshow("frame", frame)
+        # cv2.waitKey(int(SLEEP_TIME * 1000))
 
         # sleep
         time.sleep(SLEEP_TIME)
