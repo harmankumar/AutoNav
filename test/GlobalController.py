@@ -63,6 +63,7 @@ def rotateAndMove(direction):
     # cmd.forward(speed=BOT_SPEED)
 
 calibrate_angle_list = []
+calibrationDirection = 0
 
 # move bot from current position, orientation towards given target
 def moveTowardsTarget(Rvec, Tvec):
@@ -76,11 +77,14 @@ def moveTowardsTarget(Rvec, Tvec):
     print "Z-angle: ", z_angle
     calibrate_angle_list.append(z_angle)
 
-    # if(z_angle < -THRESHOLD_ANGLE):
+    # Find sign of z_angle
     l = len(calibrate_angle_list)
-    if (l<10):
-        continue
-    if(calibrate_angle_list[l-1] - calibrate_angle_list[l-10]):
+    if(l < 10):
+        return
+    if(calibrate_angle_list[l-1] < calibrate_angle_list[l-10]):
+        z_angle = -z_angle
+
+    if(z_angle < -THRESHOLD_ANGLE):
         print "Calibration-> Right Turn"
         cmd.turn(CALIBRATION_TURN_AMT)
         cmd.turn(CALIBRATION_TURN_AMT)
