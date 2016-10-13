@@ -11,7 +11,7 @@ import subprocess
 from imports import WrapperForPointGray
 
 BOT_SPEED = 4000
-CUTOFF_DISTANCE = 0.8
+CUTOFF_DISTANCE = 1.0
 THRESHOLD_ANGLE = 0.1  # in radians
 SLEEP_TIME = 0.05
 
@@ -49,7 +49,7 @@ def rotationMatrixToEulerAngles(R):
 def rotateAndMove(direction):
     # turn by TURN_AMT for TURN_TIME
     print "Turning"
-    TURN_AMT = 0.5
+    TURN_AMT = 0.4
     TURN_TIME = 0.3
     if direction:
         cmd.turn(TURN_AMT)
@@ -61,6 +61,7 @@ def rotateAndMove(direction):
         cmd.turn(-TURN_AMT)
     time.sleep(TURN_TIME)
     # cmd.forward(speed=BOT_SPEED)
+
 
 calibrate_angle_list = []
 calibrationDirection = 1
@@ -81,10 +82,10 @@ def moveTowardsTarget(Rvec, Tvec):
 
     # Find sign of z_angle
     l = len(calibrate_angle_list)
-    if(l < 3):
+    if(l < 7):
         return
     global calibrationDirection
-    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 3]):
+    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 7]):
         calibrationDirection = - calibrationDirection
     cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
     cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
@@ -119,7 +120,7 @@ def main():
     undetectedIterations = 0
     turnState = 0
     turnId = -1
-    doneList = []
+    doneList = set()
     prev_id = -1
 
     # # Get rid of initial lag
@@ -145,15 +146,19 @@ def main():
         print "Markers detected", len(markers)
         if len(markers) > 0:
             undetectedIterations = 0
-            min_d = markers[0].Tvec[2][0]
             marker = markers[0]
             for m in markers:
-                if(not(m in doneList)):
-                    m.calculateExtrinsics(marker_size, camparam)
-                    current_distance = m.Tvec[2][0]
-                    if (current_distance < min_d):
-                        min_d = current_distance
-                        marker = m
+                if not(m in doneList):
+                    marker = m
+            marker.calculateExtrinsics(marker_size, camparam)
+            # min_d = markers[0].Tvec[2][0]
+            # marker = markers[0]
+            # for m in markers:
+            #     m.calculateExtrinsics(marker_size, camparam)
+            #     current_distance = m.Tvec[2][0]
+            #     if (current_distance < min_d):
+            #         min_d = current_distance
+            #         marker = m
 
             # # Draw marker on observedframe image
             # marker.draw(frame, np.array([255, 0, 0]), 10, True)
@@ -185,15 +190,26 @@ def main():
                     (frame, markers) = getMarkersFromCurrentFrame()
                     global calibrate_angle_list
                     calibrate_angle_list = []
-                    doneList.append(marker.id)
+                    doneList.add(marker.id)
                     print "Added to doneList: ", marker.id
                     print doneList
-                    for marker in markers:
-                        print "Seeing current marker"
-                        if(not(marker.id in doneList)):
-                            print "Detected new marker"
-                            toBreak = True
-                            break
+                    if len(markers) > 0:
+                        for marker_curr in markers:
+                            print "Seeing current marker_curr"
+                            marker_curr.calculateExtrinsics(marker_size, camparam)
+                            R = cv2.Rodrigues(marker_curr.Rvec)
+                            euler_angles = rotationMatrixToEulerAngles(R[0])
+                            z_angle = euler_angles[1]
+                            if(not(marker_curr.id in doneList) and z_angle < 0.15):
+                                print "Detected new marker"
+                                rotateAndMove(bool(turnState))
+                                toBreak = True
+                                break
+                    else :
+                        print "Undetected", undetectedIterations
+                        undetectedIterations = undetectedIterations + 1
+                        if(undetectedIterations > 30):
+                            cmd.stop()
                     if(toBreak):
                         break
                 turnMode = False
@@ -205,9 +221,10 @@ def main():
                 print "Changed turnstate to: ", turnState
 
         else:
+            print "Undetected", undetectedIterations
             undetectedIterations = undetectedIterations + 1
 
-        if(undetectedIterations > 100):
+        if(undetectedIterations > 20):
             cmd.stop()
 
         # # show frame
