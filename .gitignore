@@ -13,4 +13,5 @@ share/
 output/
 *.mp4
 *.pyc
+*.o
 *.old

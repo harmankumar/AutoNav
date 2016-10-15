@@ -48,8 +48,8 @@ def rotationMatrixToEulerAngles(R):
 # rotate bot (sharply) in given direction
 def rotateAndMove(direction):
     # turn by TURN_AMT for TURN_TIME
-    TURN_AMT = 0.7
-    TURN_TIME = 1.5
+    TURN_AMT = 0.3
+    TURN_TIME = 0.3
     if direction:
         cmd.turn(TURN_AMT)
         cmd.turn(TURN_AMT)
@@ -63,7 +63,7 @@ def rotateAndMove(direction):
 
 
 # move bot from current position, orientation towards given target
-def moveTowardsTarget(Rvec, Tvec):  # Pas the object ID that has to be reached.
+def moveTowardsTarget(Rvec, Tvec):
     # Get the orientation of the object using Rvec and Tvec
     R = cv2.Rodrigues(Rvec)
     euler_angles = rotationMatrixToEulerAngles(R[0])
@@ -89,9 +89,9 @@ def moveTowardsTarget(Rvec, Tvec):  # Pas the object ID that has to be reached.
     return
 
 
-
 turnMode = False
 calibrateMode = True
+
 
 def main():
     global calibrateMode
@@ -105,11 +105,18 @@ def main():
     turnId = -1
     prev_id = -1
 
+    # Get rid of initial lag
+    (frame, markers) = getMarkersFromCurrentFrame()
+    marker.draw(frame, np.array([255, 0, 0]), 10, True)
+    cv2.imshow("frame", frame)
+    cv2.waitKey(10)
+    time.sleep(5)
+
     while(True):
 
         # get an image
         # markers = findImageArucoParams('ar2.png')
-        markers = getMarkersFromCurrentFrame()
+        (frame, markers) = getMarkersFromCurrentFrame()
 
         # Process markers
         print "Markers detected", len(markers)
@@ -124,8 +131,8 @@ def main():
                     min_d = current_distance
                     marker = m
 
-            # # Draw marker on observedframe image
-            # marker.draw(img, np.array([255, 0, 0]), 10, True)
+            # Draw marker on observedframe image
+            marker.draw(frame, np.array([255, 0, 0]), 10, True)
 
             print "Id:", marker.id
             # print "Rvec:\n", marker.Rvec
@@ -150,10 +157,10 @@ def main():
                 turnId = marker.id
                 while True:
                     rotateAndMove(bool(turnState))
-                    markers = getMarkersFromCurrentFrame()
+                    (frame, markers) = getMarkersFromCurrentFrame()
                     for marker in markers:
                         if(not(marker.id == turnId)):
-                            break;
+                            break
                 turnMode = False
                 calibrateMode = True
                 cmd.forward(speed=BOT_SPEED)
@@ -166,6 +173,10 @@ def main():
 
         if(undetectedIterations > 100):
             cmd.stop()
+
+        # show frame
+        cv2.imshow("frame", frame)
+        cv2.waitKey(10)
 
         # sleep
         time.sleep(SLEEP_TIME)
