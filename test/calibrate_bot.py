@@ -4,14 +4,16 @@ import time
 
 
 def main():
-
-    cmd.forward(speed=6000)
-    # cmd.reverse(speed=6000)
-    time.sleep(3)
+    print "Start"
+    # cmd.forward(speed=6000, duration = 5)
+    cmd.forward(speed=12000)
+    time.sleep(5)
+    print "Done"
     # cmd.stop()
-    cmd.turn(0.8)
-    time.sleep(2)
-    cmd.stop()
+    # cmd.stop()
+    # cmd.turn(0.8)
+    # time.sleep(2)
+    # cmd.stop()
 
 
 if __name__ == '__main__':

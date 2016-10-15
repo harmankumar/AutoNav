@@ -11,7 +11,7 @@ import subprocess
 from imports import WrapperForPointGray
 
 BOT_SPEED = 4000
-CUTOFF_DISTANCE = 1.3
+CUTOFF_DISTANCE = 1.0
 THRESHOLD_ANGLE = 0.1  # in radians
 SLEEP_TIME = 0.05
 
@@ -48,7 +48,8 @@ def rotationMatrixToEulerAngles(R):
 # rotate bot (sharply) in given direction
 def rotateAndMove(direction):
     # turn by TURN_AMT for TURN_TIME
-    TURN_AMT = 0.3
+    print "Turning"
+    TURN_AMT = 0.4
     TURN_TIME = 0.3
     if direction:
         cmd.turn(TURN_AMT)
@@ -62,30 +63,47 @@ def rotateAndMove(direction):
     # cmd.forward(speed=BOT_SPEED)
 
 
+calibrate_angle_list = []
+calibrationDirection = 1
+
 # move bot from current position, orientation towards given target
 def moveTowardsTarget(Rvec, Tvec):
+    # Move towards the object for CALIBRATION_SLEEP_TIME
+    CALIBRATION_TURN_AMT = 0.3
+    CALIBRATION_SLEEP_TIME = 0.3
     # Get the orientation of the object using Rvec and Tvec
     R = cv2.Rodrigues(Rvec)
     euler_angles = rotationMatrixToEulerAngles(R[0])
     z_angle = euler_angles[1]
     print "Z-angle: ", z_angle
+    calibrate_angle_list.append(z_angle)
 
-    # Move towards the object for CALIBRATION_SLEEP_TIME
-    CALIBRATION_TURN_AMT = 0.3
-    CALIBRATION_SLEEP_TIME = 0.3
-    if(z_angle < -THRESHOLD_ANGLE):
-        print "Calibration-> Right Turn"
-        cmd.turn(CALIBRATION_TURN_AMT)
-        cmd.turn(CALIBRATION_TURN_AMT)
-        cmd.turn(CALIBRATION_TURN_AMT)
-        time.sleep(CALIBRATION_SLEEP_TIME)
-    elif(z_angle > THRESHOLD_ANGLE):
-        print "Calibration-> Left Turn"
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        cmd.turn(-CALIBRATION_TURN_AMT)
-        time.sleep(CALIBRATION_SLEEP_TIME)
+    # Find sign of z_angle
+    l = len(calibrate_angle_list)
+    if(l < 7):
+        return
+    global calibrationDirection
+    if(calibrate_angle_list[l - 1] > calibrate_angle_list[l - 7]):
+        calibrationDirection = - calibrationDirection
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    cmd.turn(calibrationDirection * CALIBRATION_TURN_AMT)
+    time.sleep(CALIBRATION_SLEEP_TIME)
+
+    # if(z_angle < -THRESHOLD_ANGLE):
+    #     print "Calibration-> Right Turn"
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     cmd.turn(CALIBRATION_TURN_AMT)
+    #     time.sleep(CALIBRATION_SLEEP_TIME)
+    # elif(z_angle > THRESHOLD_ANGLE):
+    #     print "Calibration-> Left Turn"
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     cmd.turn(-CALIBRATION_TURN_AMT)
+    #     time.sleep(CALIBRATION_SLEEP_TIME)
     cmd.forward(speed=BOT_SPEED)
+    time.sleep(CALIBRATION_SLEEP_TIME)
     return
 
 
@@ -97,23 +115,27 @@ def main():
     global calibrateMode
     global turnMode
 
-    cmd.forward(speed=BOT_SPEED)
-    time.sleep(SLEEP_TIME)
-
     undetectedIterations = 0
     turnState = 0
     turnId = -1
+    doneList = set()
     prev_id = -1
 
-    # Get rid of initial lag
-    (frame, markers) = getMarkersFromCurrentFrame()
-    marker.draw(frame, np.array([255, 0, 0]), 10, True)
-    cv2.imshow("frame", frame)
-    cv2.waitKey(10)
-    time.sleep(5)
+    # # Get rid of initial lag
+    # print "Initial"
+    # (frame, markers) = getMarkersFromCurrentFrame()
+    # if len(markers) > 0:
+    #     markers[0].draw(frame, np.array([255, 0, 0]), 10, True)
+    # cv2.imshow("frame", frame)
+    # cv2.waitKey(10)
+    # time.sleep(5)
+
+    print "Start bot"
+    cmd.forward(speed=BOT_SPEED)
+    time.sleep(SLEEP_TIME)
 
     while(True):
-
+        print "Start loop"
         # get an image
         # markers = findImageArucoParams('ar2.png')
         (frame, markers) = getMarkersFromCurrentFrame()
@@ -122,17 +144,22 @@ def main():
         print "Markers detected", len(markers)
         if len(markers) > 0:
             undetectedIterations = 0
-            min_d = markers[0].Tvec[2][0]
             marker = markers[0]
             for m in markers:
-                m.calculateExtrinsics(marker_size, camparam)
-                current_distance = m.Tvec[2][0]
-                if (current_distance < min_d):
-                    min_d = current_distance
+                if not(m in doneList):
                     marker = m
+            marker.calculateExtrinsics(marker_size, camparam)
+            # min_d = markers[0].Tvec[2][0]
+            # marker = markers[0]
+            # for m in markers:
+            #     m.calculateExtrinsics(marker_size, camparam)
+            #     current_distance = m.Tvec[2][0]
+            #     if (current_distance < min_d):
+            #         min_d = current_distance
+            #         marker = m
 
-            # Draw marker on observedframe image
-            marker.draw(frame, np.array([255, 0, 0]), 10, True)
+            # # Draw marker on observedframe image
+            # marker.draw(frame, np.array([255, 0, 0]), 10, True)
 
             print "Id:", marker.id
             # print "Rvec:\n", marker.Rvec
@@ -154,29 +181,54 @@ def main():
 
             if turnMode:
                 # ---------------- TURN MODE ---------------
-                turnId = marker.id
+                # turnId = marker.id
                 while True:
+                    toBreak = False
                     rotateAndMove(bool(turnState))
                     (frame, markers) = getMarkersFromCurrentFrame()
-                    for marker in markers:
-                        if(not(marker.id == turnId)):
-                            break
+
+                    global calibrate_angle_list
+                    calibrate_angle_list = []
+                    doneList.add(marker.id)
+                    print "Added to doneList: ", marker.id
+                    print doneList
+                    if len(markers) > 0:
+                        for marker_curr in markers:
+                            print "Seeing current marker_curr"
+                            marker_curr.calculateExtrinsics(marker_size, camparam)
+                            R = cv2.Rodrigues(marker_curr.Rvec)
+                            euler_angles = rotationMatrixToEulerAngles(R[0])
+                            z_angle = euler_angles[1]
+                            if(not(marker_curr.id in doneList) and z_angle < 0.15):
+                                print "Detected new marker"
+                                rotateAndMove(bool(turnState))
+                                toBreak = True
+                                break
+                    else :
+                        print "Undetected", undetectedIterations
+                        undetectedIterations = undetectedIterations + 1
+                        if(undetectedIterations > 30):
+                            cmd.stop()
+                    if(toBreak):
+                        break
                 turnMode = False
                 calibrateMode = True
+                print "Exited turn mode"
                 cmd.forward(speed=BOT_SPEED)
                 # Change turnstate for next turn
                 turnState = turnState ^ 1
                 print "Changed turnstate to: ", turnState
 
         else:
+            print "Undetected", undetectedIterations
             undetectedIterations = undetectedIterations + 1
 
-        if(undetectedIterations > 100):
+        if(undetectedIterations > 20):
             cmd.stop()
 
-        # show frame
-        cv2.imshow("frame", frame)
-        cv2.waitKey(10)
+        # # show frame
+        # cv2.imshow("frame", frame)
+        # cv2.waitKey(int(SLEEP_TIME * 1000))
 
         # sleep
         time.sleep(SLEEP_TIME)

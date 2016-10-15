@@ -1,0 +1,3 @@
+Speed       Time          Distance
+3000        10s           120+-10cm (4 t)
+6000        10s            
