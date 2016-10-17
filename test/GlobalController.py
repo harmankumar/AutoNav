@@ -75,8 +75,6 @@ calibrate_angle_list = []
 calibrationDirection = 1
 
 # move bot from current position, orientation towards given target
-
-
 def moveTowardsTarget(Rvec, Tvec):
     # Move towards the object for CALIBRATION_SLEEP_TIME
     CALIBRATION_TURN_AMT = 0.3
@@ -196,6 +194,7 @@ def main():
                     toBreak = False
                     rotateAndMove(bool(turnState))
                     (frame, markers) = getMarkersFromCurrentFrame()
+
                     global calibrate_angle_list
                     calibrate_angle_list = []
                     doneList.add(marker.id)
