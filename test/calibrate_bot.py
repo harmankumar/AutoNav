@@ -6,10 +6,10 @@ import time
 def main():
     print "Start"
     # cmd.forward(speed=6000, duration = 5)
-    cmd.forward(speed=12000)
-    time.sleep(5)
+    cmd.forward(speed=3000)
+    time.sleep(4)
     print "Done"
-    # cmd.stop()
+    cmd.stop()
     # cmd.stop()
     # cmd.turn(0.8)
     # time.sleep(2)

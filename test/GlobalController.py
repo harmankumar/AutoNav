@@ -9,6 +9,14 @@ import cgbot
 from cgbot.commands import cmd
 import subprocess
 from imports import WrapperForPointGray
+from EncoderReading import *
+from cgbot.redisdb import rdb
+from cgbot.sensors import Orientation
+
+def orient():
+    compass = Orientation()
+    print compass.yaw
+    sys.exit(0)
 
 BOT_SPEED = 4000
 CUTOFF_DISTANCE = 1.0
@@ -235,5 +243,6 @@ def main():
 
 
 if __name__ == '__main__':
+    orient()
     init()
     main()
