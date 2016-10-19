@@ -6,21 +6,17 @@
 using namespace cv;
 using namespace std;
 
+vector<Point> floorPoints;
+const int WindowSize = 200;
+const int StepSize = 40;
+const int FLOOR_DIFF_THRES = 15;
+const int FLOOR_COLOR_THRES = 100;
+const float EMPTY_THRES = 0.05;
+
+Mat img;
+int imagewidth, imageheight;
+
 void checkGround() {
-    Mat img, gray;
-    img = imread("floor_4.jpg", CV_LOAD_IMAGE_COLOR);
-    // cvtColor(img, gray, CV_BGR2GRAY);
-
-    const int imagewidth = img.cols;
-    const int imageheight = img.rows;
-    // cout << imagewidth << " " << imageheight << endl;
-
-    const int WindowSize = 200;
-    const int StepSize = 40;
-    const int FLOOR_DIFF_THRES = 15;
-    const int FLOOR_COLOR_THRES = 100;
-    const float EMPTY_THRES = 0.05;
-
     const int N = WindowSize / StepSize;
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
@@ -63,7 +59,6 @@ void checkGround() {
 
 
     // Find floor points in image
-    vector<Point> floorPoints;
     for (int i = 0; i < w-N; i++) {
         for (int j = 0; j < h-N; j++) {
             countFloor = 0; countNFloor = 0;
@@ -93,8 +88,85 @@ void checkGround() {
     imwrite("floor_final.jpg", img);
 }
 
+void findTileLines() {
+    Mat gray, filt, thres;
+    // Convert to grayscale
+    cvtColor(img, gray, CV_BGR2GRAY);
+    // Median filter
+    medianBlur(gray, filt, 7);
+    // Threshold image
+    // adaptiveThreshold(filt, thres, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 2);
+    Canny(filt, thres, 50, 125);
+    imwrite("floor_thres.jpg", thres);
+    // Find hough transform
+    vector<Vec2f> lines;
+    HoughLines(thres, lines, 1, CV_PI/180, 500, 0, 0 );
+    cout << lines.size() << endl;
+
+    vector<pair<float, float> > line_params;
+    for(auto tile_line:lines) {
+        line_params.push_back(make_pair(tile_line[0], tile_line[1]));
+    }
+    sort(line_params.begin(), line_params.end());
+
+    // Reduce lines by choosing only 1 from each cluster
+    vector<pair<float, float> > line_params_unique;
+    float cluster_thres = 10.0;
+    float current_cluster_rho = line_params[0].first;
+    line_params_unique.push_back(line_params[0]);
+    for(auto params:line_params) {
+        if(params.first - current_cluster_rho > cluster_thres) {
+            current_cluster_rho = params.first;
+            line_params_unique.push_back(params);
+            cluster_thres = max((float)(0.05 * current_cluster_rho), cluster_thres);
+        }
+    }
+
+    // draw lines
+    const int len = 3000;
+    for(auto tile_param: line_params_unique)
+    {
+        float rho = tile_param.first, theta = tile_param.second;
+        cout << rho << " " << theta << endl;
+        Point pt1, pt2;
+        double a = cos(theta), b = sin(theta);
+        double x0 = a*rho, y0 = b*rho;
+        pt1.x = cvRound(x0 + len*(-b));
+        pt1.y = cvRound(y0 + len*(a));
+        pt2.x = cvRound(x0 - len*(-b));
+        pt2.y = cvRound(y0 - len*(a));
+        line( img, pt1, pt2, Scalar(0,0,255), 2, CV_AA);
+    }
+    imwrite("floor_lines.jpg", img);
+}
+
+// finds distance(pixels) of obstacle in given direction
+// Direction of bot is currently assumed to be same as camera
+int findDistance() {
+    const int X_SPAN = 6 * StepSize;
+    const int Y_GAP = 6 * StepSize;
+
+    vector<int> pointYVec;
+    for(auto point: floorPoints) {
+        if(abs(point.x - imagewidth) < X_SPAN) {
+            pointYVec.push_back(point.x);
+        }
+    }
+    sort(pointYVec.begin(), pointYVec.end());
+
+    return 0;
+}
+
 int main(int argc, char const *argv[]) {
-    checkGround();
+    img = imread("floor_3.jpg", CV_LOAD_IMAGE_COLOR);
+    imagewidth = img.cols;
+    imageheight = img.rows;
+    // cout << imagewidth << " " << imageheight << endl;
+
+    // checkGround();
+    findTileLines();
+    // int distanceToObstacle = findDistance();
+    // cout << "Distance to obstacle: " << distanceToObstacle << " pixels" << endl;
 
     return 0;
 }
