@@ -104,7 +104,8 @@ void findTileLines() {
     cout << lines.size() << endl;
 
     vector<pair<float, float> > line_params;
-    for(auto tile_line:lines) {
+    for(auto tile_line:lines)
+    {
         line_params.push_back(make_pair(tile_line[0], tile_line[1]));
     }
     sort(line_params.begin(), line_params.end());
@@ -114,6 +115,7 @@ void findTileLines() {
     float cluster_thres = 10.0;
     float current_cluster_rho = line_params[0].first;
     line_params_unique.push_back(line_params[0]);
+
     for(auto params:line_params) {
         if(params.first - current_cluster_rho > cluster_thres) {
             current_cluster_rho = params.first;
@@ -124,6 +126,7 @@ void findTileLines() {
 
     // draw lines
     const int len = 3000;
+
     for(auto tile_param: line_params_unique)
     {
         float rho = tile_param.first, theta = tile_param.second;
@@ -131,6 +134,7 @@ void findTileLines() {
         Point pt1, pt2;
         double a = cos(theta), b = sin(theta);
         double x0 = a*rho, y0 = b*rho;
+        //Adding stuff!
         pt1.x = cvRound(x0 + len*(-b));
         pt1.y = cvRound(y0 + len*(a));
         pt2.x = cvRound(x0 - len*(-b));
@@ -142,8 +146,9 @@ void findTileLines() {
 
 // finds distance(pixels) of obstacle in given direction
 // Direction of bot is currently assumed to be same as camera
-int findDistance() {
-    const int X_SPAN = 6 * StepSize;
+int findDistance()
+{
+    const int X_SPAN = 6 * StepSize;  // Why?
     const int Y_GAP = 6 * StepSize;
 
     vector<int> pointYVec;
@@ -157,8 +162,9 @@ int findDistance() {
     return 0;
 }
 
-int main(int argc, char const *argv[]) {
-    img = imread("floor_3.jpg", CV_LOAD_IMAGE_COLOR);
+int main(int argc, char const *argv[])
+{
+    img = imread("floor_1.jpg", CV_LOAD_IMAGE_COLOR);
     imagewidth = img.cols;
     imageheight = img.rows;
     // cout << imagewidth << " " << imageheight << endl;

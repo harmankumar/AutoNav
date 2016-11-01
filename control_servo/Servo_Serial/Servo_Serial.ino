@@ -13,6 +13,7 @@ void loop()
     char option = Serial.read();
     if(option=='W')
     {
+      while(!Serial.available());
       myservo.write(Serial.parseInt());
       delay(10);
       

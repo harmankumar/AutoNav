@@ -1,5 +1,5 @@
 # from detect_aruco_image import *
-from detect_aruco_flycam import *
+#from detect_aruco_flycam import *
 import time
 import math
 import sys
@@ -12,6 +12,11 @@ from imports import WrapperForPointGray
 from EncoderReading import *
 from cgbot.redisdb import rdb
 from cgbot.sensors import Orientation
+import control_servo as cs
+import MobileCommunication as mc
+
+#cs.rotate(angle)
+
 
 def orient():
     compass = Orientation()
@@ -123,6 +128,13 @@ def main():
     global calibrateMode
     global turnMode
 
+    mc.initsocket()
+    print mc.getYaw()
+
+    exit(0)
+    
+    #cs.write_servo(0)
+
     undetectedIterations = 0
     turnState = 0
     turnId = -1
@@ -163,7 +175,8 @@ def main():
             #     m.calculateExtrinsics(marker_size, camparam)
             #     current_distance = m.Tvec[2][0]
             #     if (current_distance < min_d):
-            #         min_d = current_distance
+            #         min_d = current_distanceexit(0)
+
             #         marker = m
 
             # # Draw marker on observedframe image
@@ -243,6 +256,6 @@ def main():
 
 
 if __name__ == '__main__':
-    orient()
-    init()
+    #orient()
+    #init()
     main()
