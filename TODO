@@ -1,0 +1,16 @@
+Communication protocol:
+# Output
+1) A list of points (x,y)#format to be decided
+2) Interrupt to Stop
+3) Interrupt - Modified list of points to track
+
+Format of list of points:
+1) It would be in meter scale
+2) Relative to the instance at which image was provided
+
+# Requirements
+1) Image
+2) updates on passing a point in the given list
+3) Upadte on if there is a obstacle
+
+
