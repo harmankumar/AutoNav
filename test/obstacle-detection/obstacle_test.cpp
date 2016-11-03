@@ -76,6 +76,47 @@ double getZAngle(Point point, double imagewidth, double focalLength) {
     return theta;
 }
 
+// Mean point of largest component - to follow
+floorpoint getMeanLargestComp(int num) {
+    int* numPoints = new int[num+1];
+    // Set to 0
+    for(int i = 1; i <= num; ++i) {
+        numPoints[i] = 0;
+    }
+    int maxComponent, maxPoints;
+    for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
+        // cout << iterator->second;
+        numPoints[iterator->second]++;
+    }
+
+    // Find component having max number of points
+    maxPoints = 0;
+    for(int i = 1; i <= num; ++i) {
+        int numPoint = numPoints[i];
+        if(maxPoints < numPoint) {
+            maxPoints = numPoint;
+            maxComponent = i;
+        }
+    }
+    cout << "Max component: " << maxComponent << endl;
+    cout << "Number of points: " << maxPoints << endl;
+
+    // find center of connected component
+    double target_x = 0, target_y = 0; int n = 0;
+    for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
+        if(iterator->second == maxComponent) {
+            n++;
+            // cout << iterator->first.first << " " << iterator->first.second << endl;
+            target_x += iterator->first.first;
+            target_y += iterator->first.second;
+        }
+    }
+    cout << n << endl;
+    target_x = target_x / numPoints[maxComponent];
+    target_y = target_y / numPoints[maxComponent];
+    return make_pair((int)target_x, (int)target_y);
+}
+
 void checkGround(bool coarse) {
     int N;
     if(coarse) {
@@ -150,6 +191,25 @@ void checkGround(bool coarse) {
 
 }
 
+// Get boundary points
+void getBoundaryPoints() {
+    const int Y_GAP = 10 * StepSize;
+    int xBound = floorPoints[0].first, yBound = floorPoints[0].second;
+    // cout << "Floor points: " << endl;
+    for(auto rit = floorPoints.rbegin(); rit != floorPoints.rend(); rit++) {
+        // cout << point.first << " " << point.second << endl;
+        if(rit->first != xBound) {
+            boundaryPoints.push_back(make_pair(xBound, yBound));
+            xBound = rit->first;
+            yBound = rit->second;
+        }
+        else {
+            if(rit->second < yBound and (yBound - rit->second < Y_GAP)) {
+                yBound = rit->second;
+            }
+        }
+    }
+}
 
 void findTileLines() {
     Mat gray, filt, thres;
@@ -237,21 +297,21 @@ int main(int argc, char const *argv[]) {
         circle(img, Point(point.first, point.second), 10, Scalar(0, 255, 0), -1);
     }
 
-    // // Mark connected components in points
-    // mark(floorPointsCoarse);
-    // cout << "Marked: " << ComponentNumber.size() << endl;
-    // cout << "Number of components: " << numComponents << endl;
-    //
-    // floorpoint target = getMeanLargestComp(numComponents);
-    // cout << target.first << " " << target.second << endl;
-    // Point targetPoint(target.first, target.second);
-    // circle(img, targetPoint, 30, Scalar(0, 0, 255), -1);
-    //
-    // // Get Boundary points
-    // getBoundaryPoints();
-    // for(auto boundPoint: boundaryPoints) {
-    //     Point boundaryPoint(boundPoint.first, boundPoint.second);
-    //     circle(img, boundaryPoint, 10, Scalar(255, 0, 0), -1);
+    // Mark connected components in points
+    mark(floorPointsCoarse);
+    cout << "Marked: " << ComponentNumber.size() << endl;
+    cout << "Number of components: " << numComponents << endl;
+
+    floorpoint target = getMeanLargestComp(numComponents);
+    cout << target.first << " " << target.second << endl;
+    Point targetPoint(target.first, target.second);
+    circle(img, targetPoint, 30, Scalar(0, 0, 255), -1);
+
+    // Get Boundary points
+    getBoundaryPoints();
+    for(auto boundPoint: boundaryPoints) {
+        Point boundaryPoint(boundPoint.first, boundPoint.second);
+        circle(img, boundaryPoint, 10, Scalar(255, 0, 0), -1);
     }
 
     imwrite("floor_boundary.jpg", img);
