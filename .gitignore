@@ -11,7 +11,11 @@ test/cgbot/
 lib/
 share/
 output/
+obstacle_test
 *.mp4
+*.jpg
+*.png
 *.pyc
 *.o
 *.old
+.rlog
