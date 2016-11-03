@@ -29,6 +29,47 @@ int imagewidth, imageheight;
 //     return (abs(a.x - b.x) <= StepSize or abs(a.y - b.y) <= StepSize);
 // }
 
+// dfs through points in image
+void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoints) {
+    int dx[4] = {0, 0, StepSize, -StepSize};
+    int dy[4] = {StepSize, -StepSize, 0, 0};
+
+    // if(visited.count(currPoint))
+    //     return;
+
+    ComponentNumber[currPoint] = numComponents;
+    visited.insert(currPoint);
+
+    for(int k=0; k<4; k++)
+    {
+        floorpoint newPoint = make_pair(currPoint.first + dx[k], currPoint.second + dy[k]);
+
+        if(allPoints.count(newPoint) and (!visited.count(newPoint)))
+            dfs(newPoint, visited, allPoints);
+    }
+
+}
+
+
+// Mark connected components in point vector
+void mark(vector<floorpoint>& v) {
+    set<floorpoint> allPoints;
+    set<floorpoint> visited;
+
+    numComponents = 0;
+
+    for(auto it: v)
+        allPoints.insert(it);
+
+    for(auto it: allPoints)
+    {
+        if(visited.count(it))
+            continue;
+        numComponents++;
+        dfs(it, visited, allPoints);
+    }
+}
+
 // Get yaw angle of bot
 double getZAngle(Point point, double imagewidth, double focalLength) {
     double theta = atan((double)(point.x - imagewidth)/focalLength);
