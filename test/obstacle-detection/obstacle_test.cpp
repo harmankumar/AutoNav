@@ -6,18 +6,37 @@
 using namespace cv;
 using namespace std;
 
-vector<Point> floorPoints;
+typedef pair<int, int> floorpoint;
+
+vector<floorpoint> floorPoints;
+vector<floorpoint> floorPointsCoarse;
+vector<floorpoint> boundaryPoints;
 const int WindowSize = 200;
+const int WindowSizeCoarse = 500;
 const int StepSize = 40;
 const int FLOOR_DIFF_THRES = 15;
 const int FLOOR_COLOR_THRES = 100;
 const float EMPTY_THRES = 0.05;
 
+map<floorpoint, int> ComponentNumber;
+int numComponents = 0;
+
 Mat img;
 int imagewidth, imageheight;
 
-void checkGround() {
-    const int N = WindowSize / StepSize;
+// bool isNeighbour(Point a, Point b)
+// {
+//     return (abs(a.x - b.x) <= StepSize or abs(a.y - b.y) <= StepSize);
+// }
+
+void checkGround(bool coarse) {
+    int N;
+    if(coarse) {
+        N = WindowSizeCoarse / StepSize;
+    }
+    else {
+        N = WindowSize / StepSize;
+    }
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
@@ -57,7 +76,6 @@ void checkGround() {
         // cout << endl;
     }
 
-
     // Find floor points in image
     for (int i = 0; i < w-N; i++) {
         for (int j = 0; j < h-N; j++) {
@@ -71,29 +89,27 @@ void checkGround() {
             float floorRatio = ((float)countNFloor)/((float)countFloor + (float)countNFloor);
             // cout << floorRatio << " ";
             if(floorRatio < EMPTY_THRES) {
-                floorPoints.push_back(Point((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                if(coarse) {
+                    floorPointsCoarse.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
+                else {
+                    floorPoints.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
             }
         }
         // cout << endl;
     }
 
-    cout << "No. of floor points: " << floorPoints.size() << endl;
 
-    // Draw points on image
-    for(auto point: floorPoints) {
-        // cout << point;
-        circle(img, point, 10, Scalar(0, 255, 0), -1);
-    }
-
-    imwrite("floor_final.jpg", img);
 }
+
 
 void findTileLines() {
     Mat gray, filt, thres;
     // Convert to grayscale
     cvtColor(img, gray, CV_BGR2GRAY);
     // Median filter
-    medianBlur(gray, filt, 7);
+    medianBlur(gray, filt, 5);
     // Threshold image
     // adaptiveThreshold(filt, thres, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 2);
     Canny(filt, thres, 50, 125);
@@ -144,12 +160,11 @@ void findTileLines() {
 // Direction of bot is currently assumed to be same as camera
 int findDistance() {
     const int X_SPAN = 6 * StepSize;
-    const int Y_GAP = 6 * StepSize;
 
     vector<int> pointYVec;
     for(auto point: floorPoints) {
-        if(abs(point.x - imagewidth) < X_SPAN) {
-            pointYVec.push_back(point.x);
+        if(abs(point.first - imagewidth) < X_SPAN) {
+            pointYVec.push_back(point.first);
         }
     }
     sort(pointYVec.begin(), pointYVec.end());
@@ -157,14 +172,44 @@ int findDistance() {
     return 0;
 }
 
+
 int main(int argc, char const *argv[]) {
-    img = imread("floor_3.jpg", CV_LOAD_IMAGE_COLOR);
+    img = imread("./floor/floor_21.jpg", CV_LOAD_IMAGE_COLOR);
     imagewidth = img.cols;
     imageheight = img.rows;
     // cout << imagewidth << " " << imageheight << endl;
 
-    // checkGround();
-    findTileLines();
+    checkGround(false);     // find points using fine window
+    checkGround(true);     // find points using coarse window
+    // findTileLines();
+
+    // Draw points on image
+    cout << "No. of coarse floor points: " << floorPointsCoarse.size() << endl;
+    for(auto point: floorPointsCoarse) {
+        // cout << point;
+        circle(img, Point(point.first, point.second), 10, Scalar(0, 255, 0), -1);
+    }
+
+    // // Mark connected components in points
+    // mark(floorPointsCoarse);
+    // cout << "Marked: " << ComponentNumber.size() << endl;
+    // cout << "Number of components: " << numComponents << endl;
+    //
+    // floorpoint target = getMeanLargestComp(numComponents);
+    // cout << target.first << " " << target.second << endl;
+    // Point targetPoint(target.first, target.second);
+    // circle(img, targetPoint, 30, Scalar(0, 0, 255), -1);
+    //
+    // // Get Boundary points
+    // getBoundaryPoints();
+    // for(auto boundPoint: boundaryPoints) {
+    //     Point boundaryPoint(boundPoint.first, boundPoint.second);
+    //     circle(img, boundaryPoint, 10, Scalar(255, 0, 0), -1);
+    }
+
+    imwrite("floor_boundary.jpg", img);
+
+
     // int distanceToObstacle = findDistance();
     // cout << "Distance to obstacle: " << distanceToObstacle << " pixels" << endl;
 
