@@ -29,6 +29,12 @@ int imagewidth, imageheight;
 //     return (abs(a.x - b.x) <= StepSize or abs(a.y - b.y) <= StepSize);
 // }
 
+// Get yaw angle of bot
+double getZAngle(Point point, double imagewidth, double focalLength) {
+    double theta = atan((double)(point.x - imagewidth)/focalLength);
+    return theta;
+}
+
 void checkGround(bool coarse) {
     int N;
     if(coarse) {
