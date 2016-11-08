@@ -11,6 +11,8 @@ import subprocess
 from imports import WrapperForPointGray
 from EncoderReading import *
 from cgbot.redisdb import rdb
+from cgbot.robot import rbt
+from cgbot.detect import motorcontroller
 from cgbot.sensors import Orientation
 import control_servo as cs
 import MobileCommunication as mc
@@ -119,6 +121,11 @@ def moveTowardsTarget(Rvec, Tvec):
     time.sleep(CALIBRATION_SLEEP_TIME)
     return
 
+def readMotrTicks():
+    temp = rbt.readTick()
+    return (temp[0][1],temp[1][1])
+
+
 
 turnMode = False
 calibrateMode = True
@@ -127,12 +134,14 @@ calibrateMode = True
 def main():
     global calibrateMode
     global turnMode
+    rbt.connect(motorcontroller())
 
     mc.initsocket()
     print mc.getYaw()
 
+
     exit(0)
-    
+
     #cs.write_servo(0)
 
     undetectedIterations = 0
@@ -251,7 +260,6 @@ def main():
         # cv2.imshow("frame", frame)
         # cv2.waitKey(int(SLEEP_TIME * 1000))
 
-        # sleep
         time.sleep(SLEEP_TIME)
 
 
