@@ -8,9 +8,12 @@ aruco-test/
 bin/
 include/
 test/cgbot/
+test/lcm-test/
+test/exlcm/
 lib/
 share/
 output/
+test/cgbot
 *.mp4
 *.pyc
 *.o

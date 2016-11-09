@@ -13,54 +13,19 @@ from cgbot.robot import rbt
 from cgbot.detect import motorcontroller
 from cgbot.sensors import Orientation
 import control_servo as cs
-import socket, traceback
-import netifaces as ni
+import MobileCommunication as mc
 
 SLEEP_TIME = 0.05
 BOT_SPEED = 4000
-WHEEL_RADIUS = 0.08912 #0.16 #in metres
+WHEEL_RADIUS = 0.16 #in metres
 ENC_TICKS_360 = 1250
 TICK_TO_DIST = 2 * math.pi * WHEEL_RADIUS/ ENC_TICKS_360
-DELTA = 0.0000;
-
-
-
-
-
-host = ni.ifaddresses('wlan0')[2][0]['addr']
-#print ip  # should print "192.168.100.37
-# Note that the IP Address and Port in this script and the script on the Mobile Phone should match.
-#host = "10.192.46.131"   #IP Address of this Machine
-port = 3400
-
-s = None
-
-def initsocket():
-    global s
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    s.bind((host, port))
-    return s
-
-def getYaw():
-    global s
-    try:
-        message, address = s.recvfrom(4096)
-        orient = float((message.split())[1])
-        orient = orient * 180/3.14;
-
-        return orient
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except:
-        traceback.print_exc()
-
+DELTA = 0.00003;
 
 
 def init():
     rbt.connect(motorcontroller())
-    initsocket()
+    mc.initsocket()
 
 def readMotorTicks():
     temp = rbt.readTick()
@@ -85,14 +50,16 @@ def moveDistance(direction,dis): # @param direction: 1 -> forward and -1 -> back
     cmd.stop()
 
 def rotate(direction,angle): # @param direction: 1 -> left and -1 -> right
-    initYaw = getYaw()
+    initYaw =  mc.getYaw()
+    cmd.forward(speed=BOT_SPEED)
     if(direction==1):
-        cmd.turn(0.4)
+        cmd.turn(0.1)
     elif(direction==-1):
         cmd.turn(-0.4)
 
     while(True):
-        yaw = getYaw()
+        yaw = mc.getYaw()
+        print yaw
         if(abs(initYaw - yaw) > angle ):
             break
     cmd.stop()
@@ -100,10 +67,10 @@ def rotate(direction,angle): # @param direction: 1 -> left and -1 -> right
 
 def main():
     init()
+    #while(True):
+     # print mc.getYaw()-17
     #moveDistance(1,1)
     rotate(1,90)
-    #while(True):
-     #   print getYaw()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,3 @@
-
-
 # Calculates rotation matrix to euler angles
 # The result is the same as MATLAB except the order
 # of the euler angles ( x and z are swapped ).
@@ -18,4 +16,3 @@ def rotationMatrixToEulerAngles(R) :
         z = 0
 
     return np.array([x, y, z])
-
