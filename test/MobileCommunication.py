@@ -1,6 +1,6 @@
 import socket, traceback
 import netifaces as ni
-
+import math
 
 host = ni.ifaddresses('wlan0')[2][0]['addr']
 #print ip  # should print "192.168.100.37
@@ -24,12 +24,10 @@ def getYaw():
     try:
         message, address = s.recvfrom(4096)
         orient = float((message.split())[1])
-        orient = orient * 180/3.14;
+        orient = orient * 180/math.pi;
 
         return orient
     except (KeyboardInterrupt, SystemExit):
         raise
     except:
         traceback.print_exc()
-
-
