@@ -1,10 +1,9 @@
-# from detect_aruco_image import *
-#from detect_aruco_flycam import *
 import time
 import math
 import sys
 import os
 import numpy as np
+import pyfly2
 import cgbot
 from cgbot.commands import cmd
 import subprocess
@@ -16,9 +15,11 @@ from cgbot.detect import motorcontroller
 from cgbot.sensors import Orientation
 import control_servo as cs
 import MobileCommunication as mc
+import lcm
+from exlcm import example_t
+
 
 #cs.rotate(angle)
-
 
 def orient():
     compass = Orientation()
@@ -29,7 +30,10 @@ BOT_SPEED = 4000
 CUTOFF_DISTANCE = 1.0
 THRESHOLD_ANGLE = 0.1  # in radians
 SLEEP_TIME = 0.05
+PROCESSING_INTERVAL = 1
 
+turnAngle = 0
+distanceToObstacle = 0
 
 def init():
     process1 = subprocess.call('cd /home/piyush/run-bot', shell=True)
@@ -121,145 +125,50 @@ def moveTowardsTarget(Rvec, Tvec):
     time.sleep(CALIBRATION_SLEEP_TIME)
     return
 
-def readMotrTicks():
-    temp = rbt.readTick()
-    return (temp[0][1],temp[1][1])
+def readMotorTicks():
+    tick = rbt.readTick()
+    return (tick[0][1],tick[1][1])
 
-
-
-turnMode = False
-calibrateMode = True
+def my_handler(channel, data):
+    global turnAngle
+    global distanceToObstacle
+    msg = example_t.decode(data)
+    print("Received message on channel \"%s\"" % channel)
+    turnAngle = msg.angle
+    print("Target Angle = %s" % str(turnAngle))
+    distanceToObstacle = msg.distance
+    print("Distance to obstacle = %s" % str(distanceToObstacle))
 
 
 def main():
-    global calibrateMode
-    global turnMode
+    global turnAngle
     rbt.connect(motorcontroller())
 
+    lc = lcm.LCM()
+    subscription = lc.subscribe("PROCESSING_RECEIVE", my_handler)
+
     mc.initsocket()
-    print mc.getYaw()
-
-
-    exit(0)
-
+    # print mc.getYaw()
     #cs.write_servo(0)
 
-    undetectedIterations = 0
-    turnState = 0
-    turnId = -1
-    doneList = set()
-    prev_id = -1
-
-    # # Get rid of initial lag
-    # print "Initial"
-    # (frame, markers) = getMarkersFromCurrentFrame()
-    # if len(markers) > 0:
-    #     markers[0].draw(frame, np.array([255, 0, 0]), 10, True)
-    # cv2.imshow("frame", frame)
-    # cv2.waitKey(10)
-    # time.sleep(5)
-
-    print "Start bot"
-    cmd.forward(speed=BOT_SPEED)
-    time.sleep(SLEEP_TIME)
+    start_time = time.time()
+    counter = 0
 
     while(True):
-        print "Start loop"
-        # get an image
-        # markers = findImageArucoParams('ar2.png')
-        (frame, markers) = getMarkersFromCurrentFrame()
+        end_time = time.time()
+        if(end_time - start_time > PROCESSING_INTERVAL):
+            frame = camera.GrabNumPyImage('bgr')
+            cv2.imwrite(str(counter) + ".jpg", frame)
+            # TODO Delete previous image
+            msg = example_t()
+            msg.currImage = counter
+            # TODO add focal length to message / result
+            lc.publish("PROCESSING_SEND", msg.encode())
+            lc.handle()     # Recieve angle
+            start_time = time.time()    # Restart count
 
-        # Process markers
-        print "Markers detected", len(markers)
-        if len(markers) > 0:
-            undetectedIterations = 0
-            marker = markers[0]
-            for m in markers:
-                if not(m in doneList):
-                    marker = m
-            marker.calculateExtrinsics(marker_size, camparam)
-            # min_d = markers[0].Tvec[2][0]
-            # marker = markers[0]
-            # for m in markers:
-            #     m.calculateExtrinsics(marker_size, camparam)
-            #     current_distance = m.Tvec[2][0]
-            #     if (current_distance < min_d):
-            #         min_d = current_distanceexit(0)
-
-            #         marker = m
-
-            # # Draw marker on observedframe image
-            # marker.draw(frame, np.array([255, 0, 0]), 10, True)
-
-            print "Id:", marker.id
-            # print "Rvec:\n", marker.Rvec
-            # print "Tvec:\n", marker.Tvec
-            print "Distance:\n", marker.Tvec[2][0]
-
-            if calibrateMode:
-                # ---------------- CALIBRATE MODE ---------------
-                # take action according to distance and id of detected marker
-                marker_distance = marker.Tvec[2][0]
-                if(marker_distance < CUTOFF_DISTANCE):
-                    print "******************"
-                    print "Detected threshold"
-                    print "******************"
-                    calibrateMode = False
-                    turnMode = True
-                else:
-                    moveTowardsTarget(marker.Rvec, marker.Tvec)
-
-            if turnMode:
-                # ---------------- TURN MODE ---------------
-                # turnId = marker.id
-                while True:
-                    toBreak = False
-                    rotateAndMove(bool(turnState))
-                    (frame, markers) = getMarkersFromCurrentFrame()
-
-                    global calibrate_angle_list
-                    calibrate_angle_list = []
-                    doneList.add(marker.id)
-                    print "Added to doneList: ", marker.id
-                    print doneList
-                    if len(markers) > 0:
-                        for marker_curr in markers:
-                            print "Seeing current marker_curr"
-                            marker_curr.calculateExtrinsics(marker_size, camparam)
-                            R = cv2.Rodrigues(marker_curr.Rvec)
-                            euler_angles = rotationMatrixToEulerAngles(R[0])
-                            z_angle = euler_angles[1]
-                            if(not(marker_curr.id in doneList) and z_angle < 0.15):
-                                print "Detected new marker"
-                                rotateAndMove(bool(turnState))
-                                toBreak = True
-                                break
-                    else :
-                        print "Undetected", undetectedIterations
-                        undetectedIterations = undetectedIterations + 1
-                        if(undetectedIterations > 30):
-                            cmd.stop()
-                    if(toBreak):
-                        break
-                turnMode = False
-                calibrateMode = True
-                print "Exited turn mode"
-                cmd.forward(speed=BOT_SPEED)
-                # Change turnstate for next turn
-                turnState = turnState ^ 1
-                print "Changed turnstate to: ", turnState
-
-        else:
-            print "Undetected", undetectedIterations
-            undetectedIterations = undetectedIterations + 1
-
-        if(undetectedIterations > 20):
-            cmd.stop()
-
-        # # show frame
-        # cv2.imshow("frame", frame)
-        # cv2.waitKey(int(SLEEP_TIME * 1000))
-
+        counter += 1
+        # TODO handle bot movement
         time.sleep(SLEEP_TIME)
 
 
