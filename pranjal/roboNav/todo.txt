@@ -1,0 +1,7 @@
+Two modes of operation:
+1) Exploratory mode : guide the robot using free space modelling
+2) Local planning : given a set of points (ordered a1 to an) goal is to reach an via intermediate points. Feedback of failure and success.
+
+
+@shashank
+All done. @Pranjal get off your sorry ass now.

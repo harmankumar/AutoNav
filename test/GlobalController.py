@@ -141,7 +141,8 @@ def my_handler(channel, data):
 
 
 def main():
-    global turnAngle
+    global calibrateMode
+    global turnMode
     rbt.connect(motorcontroller())
 
     lc = lcm.LCM()
