@@ -60,6 +60,20 @@ void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoi
 }
 
 
+vector<int> boundaryPoints()
+{
+  // Keep a sliding window of size k and have the minimum of that sliding window
+  // The best one (farthest is the direction we move in)
+
+  dequeue<Point>; // Point is some datatype
+
+  for(auto it: input)
+  {
+
+
+  }
+}
+
 // Mark connected components in point vector
 void mark(vector<floorpoint>& v) {
     set<floorpoint> allPoints;

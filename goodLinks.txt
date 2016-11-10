@@ -1,1 +1,6 @@
 https://github.com/irtiq7/Obstacle-detection-algorithm-in-SimpleCV/wiki
+
+Obstacle Avoidance and FreeSpace Detection:
+
+http://www.cs.cmu.edu/~mmv/papers/05sbai-juan.pdf
+
