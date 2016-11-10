@@ -20,7 +20,7 @@ run: $(TARGET)
 
 testrun: $(CPPFILES)
 	$(CC) -std=c++11 `pkg-config --cflags opencv` -o $(TESTTARGET) $(CPPFILES) `pkg-config --libs opencv`
-	./$(TESTTARGET)
+	./$(TESTTARGET)	
 
 clean:
 	$(RM) $(TARGET)

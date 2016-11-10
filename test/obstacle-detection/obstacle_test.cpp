@@ -14,8 +14,6 @@ vector<floorpoint> boundaryPoints;
 const int WindowSize = 200;
 const int WindowSizeCoarse = 500;
 const int StepSize = 40;
-const int FLOOR_DIFF_THRES = 15;
-const int FLOOR_COLOR_THRES = 100;
 const float EMPTY_THRES = 0.05;
 
 map<floorpoint, int> ComponentNumber;
@@ -23,6 +21,55 @@ int numComponents = 0;
 
 Mat img;
 int imagewidth, imageheight;
+Mat img_hsi;
+
+void constructHSIImage() {
+    img_hsi = Mat(img.rows, img.cols, img.type());
+
+    float r, g, b, h, s, in;
+
+    for(int i = 0; i < img.rows; i++)
+    {
+        for(int j = 0; j < img.cols; j++)
+        {
+            b = img.at<Vec3b>(i, j)[0];
+            g = img.at<Vec3b>(i, j)[1];
+            r = img.at<Vec3b>(i, j)[2];
+
+            in = (b + g + r) / 3;
+
+            int min_val = 0;
+            min_val = std::min(r, std::min(b,g));
+
+            s = 1 - 3*(min_val/(b + g + r));
+            if(s < 0.00001)
+            {
+                s = 0;
+            } else if(s > 0.99999){
+                s = 1;
+            }
+
+            if(s != 0)
+            {
+                h = 0.5 * ((r - g) + (r - b)) / sqrt(((r - g)*(r - g)) + ((r - b)*(g - b)));
+                h = acos(h);
+
+                if(b <= g)
+                {
+                    h = h;
+                } else {
+                    h = ((360 * 3.14159265) / 180.0) - h;
+                }
+            }
+
+            img_hsi.at<Vec3b>(i, j)[0] = (h * 180) / 3.14159265;
+            img_hsi.at<Vec3b>(i, j)[1] = s*100;
+            img_hsi.at<Vec3b>(i, j)[2] = in;
+        }
+    }
+    imwrite("floor_hsi.jpg", img_hsi);
+}
+
 
 // bool isNeighbour(Point a, Point b)
 // {
@@ -71,6 +118,7 @@ void mark(vector<floorpoint>& v) {
 }
 
 // Get yaw angle of bot
+// TODO: test
 double getZAngle(Point point, double imagewidth, double focalLength) {
     double theta = atan((double)(point.x - imagewidth)/focalLength);
     return theta;
@@ -127,6 +175,9 @@ void checkGround(bool coarse) {
     }
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
+
+    const int FLOOR_DIFF_THRES = 15;
+    const int FLOOR_COLOR_THRES = 100;
 
     int fCount[w][h];   // floor count dp in boxes
     int nfCount[w][h];  // non-floor count dp in boxes
@@ -187,8 +238,81 @@ void checkGround(bool coarse) {
         }
         // cout << endl;
     }
+}
 
+void checkGroundHSI(bool coarse) {
+    int N;
+    if(coarse) {
+        N = WindowSizeCoarse / StepSize;
+    }
+    else {
+        N = WindowSize / StepSize;
+    }
+    const int w = imagewidth / StepSize;
+    const int h = imageheight / StepSize;
 
+    const float HUE_THRES = 20;
+    const float SAT_THRES = 50;
+    const float INTENSITY_THRES = 150;
+
+    int fCount[w][h];   // floor count dp in boxes
+    int nfCount[w][h];  // non-floor count dp in boxes
+    memset(fCount, -1, sizeof(fCount));
+    memset(nfCount, -1, sizeof(nfCount));
+
+    int countFloor = 0, countNFloor = 0;
+    int start_i, end_i, start_j, end_j;
+    Vec3b pixel; float pixel_h, pixel_s, pixel_i;
+    // Count number of floor and non-floor pixels in boxes of image
+    for (int i = 0; i < w; i++) {
+        for (int j = 0; j < h; j++) {
+            countFloor = 0; countNFloor = 0;
+            start_i = i * StepSize; end_i = start_i + StepSize;
+            start_j = j * StepSize; end_j = start_j + StepSize;
+            for (int k = start_i; k < end_i; k++) {
+                for (int l = start_j; l < end_j; l++) {
+                    pixel = img_hsi.at<Vec3b>(l, k);
+                    pixel_h = pixel.val[0];
+                    pixel_s = pixel.val[1];
+                    pixel_i = pixel.val[2];
+                    if(pixel_s < SAT_THRES) {
+                        countFloor++;
+                    }
+                    else {
+                        countNFloor++;
+                    }
+                }
+            }
+            fCount[i][j] = countFloor;
+            nfCount[i][j] = countNFloor;
+            // cout << countFloor << "," << countNFloor << " ";
+        }
+        // cout << endl;
+    }
+
+    // Find floor points in image
+    for (int i = 0; i < w-N; i++) {
+        for (int j = 0; j < h-N; j++) {
+            countFloor = 0; countNFloor = 0;
+            for (int k = i; k < i+N; k++) {
+                for (int l = j; l < j+N; l++) {
+                    countFloor += fCount[k][l];
+                    countNFloor += nfCount[k][l];
+                }
+            }
+            float floorRatio = ((float)countNFloor)/((float)countFloor + (float)countNFloor);
+            // cout << floorRatio << " ";
+            if(floorRatio < EMPTY_THRES) {
+                if(coarse) {
+                    floorPointsCoarse.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
+                else {
+                    floorPoints.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
+            }
+        }
+        // cout << endl;
+    }
 }
 
 // Get boundary points
@@ -269,8 +393,7 @@ void findTileLines() {
 
 // finds distance(pixels) of obstacle in given direction
 // Direction of bot is currently assumed to be same as camera
-int findDistance()
-{
+int findDistance() {
     const int X_SPAN = 6 * StepSize;  // Why?
 
     vector<int> pointYVec;
@@ -286,13 +409,16 @@ int findDistance()
 
 int main(int argc, char const *argv[])
 {
-    img = imread("floor/floor_21.jpg", CV_LOAD_IMAGE_COLOR);
+    img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    // constructHSIImage();    // construct img_hsi
+    cvtColor(img, img_hsi, CV_BGR2HSV);
+    // imwrite("floor_hsi.jpg", img_hsi);
     imagewidth = img.cols;
     imageheight = img.rows;
     // cout << imagewidth << " " << imageheight << endl;
 
-    checkGround(false);     // find points using fine window
-    checkGround(true);     // find points using coarse window
+    checkGroundHSI(false);     // find points using fine window
+    checkGroundHSI(true);     // find points using coarse window
     // findTileLines();
 
     // Draw points on image
