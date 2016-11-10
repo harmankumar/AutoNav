@@ -3,7 +3,7 @@ CC = g++
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -w    disables warnings
-CFLAGS  = -O3 -march=native -std=c++11 # -fsanitize=address
+CFLAGS  = -O3 -march=native -std=c++14 # -fsanitize=address
 
 # the build target executable:
 TARGET = obstacle_test
@@ -20,7 +20,7 @@ run: $(TARGET)
 
 testrun: $(CPPFILES)
 	$(CC) -std=c++11 `pkg-config --cflags opencv` -o $(TESTTARGET) $(CPPFILES) `pkg-config --libs opencv`
-	./$(TESTTARGET)	
+	./$(TESTTARGET)
 
 clean:
 	$(RM) $(TARGET)

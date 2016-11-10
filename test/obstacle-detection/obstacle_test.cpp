@@ -10,8 +10,8 @@ typedef pair<int, int> floorpoint;
 
 vector<floorpoint> floorPoints;
 vector<floorpoint> floorPointsCoarse;
-vector<floorpoint> boundaryPoints;
-const int WindowSize = 200;
+set<floorpoint> boundaryPoints;
+const int WindowSize = 300;
 const int WindowSizeCoarse = 500;
 const int StepSize = 40;
 const float EMPTY_THRES = 0.05;
@@ -149,19 +149,65 @@ floorpoint getMeanLargestComp(int num) {
     cout << "Max component: " << maxComponent << endl;
     cout << "Number of points: " << maxPoints << endl;
 
+    map<int, vector<int> > relevantComponent;
     // find center of connected component
     double target_x = 0, target_y = 0; int n = 0;
+    map<int, int > meanPath;
+
     for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
         if(iterator->second == maxComponent) {
             n++;
             // cout << iterator->first.first << " " << iterator->first.second << endl;
-            target_x += iterator->first.first;
-            target_y += iterator->first.second;
+            /* Forming relevant component */
+            auto point = iterator->first;
+            relevantComponent[point.second].push_back(point.first);
+
+            /* Mean Calculation */
+            target_x += point.first;
+            target_y += point.second;
         }
     }
+
+
+    for(auto it: relevantComponent)
+    {
+        int mean  = 0;
+        for(auto it1 : it.second)
+            mean += it1;
+
+        mean /= (it.second).size();
+        meanPath[it.first] = mean;
+    }
+
+    /* Draw mean path */
+    auto it = meanPath.begin();
+    int pathCount = 0;
+    const int SKIP = 3;
+    while(it != meanPath.end()) {
+        // // Draw points
+        // circle(img, Point(it->second, it->first), 10, Scalar(255, 0, 0), -1);
+        // Draw path
+        auto itNext = it;
+        if(pathCount + SKIP < meanPath.size()) {
+            advance(itNext, SKIP);
+            if(itNext != meanPath.end()) {
+                auto currPoint = Point(it->second, it->first);
+                auto nextPoint = Point(itNext->second, itNext->first);
+                line(img, currPoint, nextPoint, Scalar(255, 0 ,0), 5);
+            }
+        }
+        else {
+            break;
+        }
+        advance(it, SKIP);
+        pathCount += SKIP;
+        if(pathCount >= meanPath.size())
+            break;
+    }
+
     cout << n << endl;
-    target_x = target_x / numPoints[maxComponent];
-    target_y = target_y / numPoints[maxComponent];
+    target_x /= numPoints[maxComponent];
+    target_y /= numPoints[maxComponent];
     return make_pair((int)target_x, (int)target_y);
 }
 
@@ -323,7 +369,7 @@ void getBoundaryPoints() {
     for(auto rit = floorPoints.rbegin(); rit != floorPoints.rend(); rit++) {
         // cout << point.first << " " << point.second << endl;
         if(rit->first != xBound) {
-            boundaryPoints.push_back(make_pair(xBound, yBound));
+            boundaryPoints.insert(make_pair(xBound, yBound));
             xBound = rit->first;
             yBound = rit->second;
         }
@@ -434,15 +480,20 @@ int main(int argc, char const *argv[])
     cout << "Number of components: " << numComponents << endl;
 
     floorpoint target = getMeanLargestComp(numComponents);
-    cout << target.first << " " << target.second << endl;
+    // cout << target.first << " " << target.second << endl;
     Point targetPoint(target.first, target.second);
     circle(img, targetPoint, 30, Scalar(0, 0, 255), -1);
 
     // Get Boundary points
     getBoundaryPoints();
-    for(auto boundPoint: boundaryPoints) {
-        Point boundaryPoint(boundPoint.first, boundPoint.second);
-        circle(img, boundaryPoint, 10, Scalar(255, 0, 0), -1);
+    for(auto it = boundaryPoints.begin(); it!=boundaryPoints.end(); it++) {
+        // circle(img, boundaryPoint, 10, Scalar(255, 0, 0), -1);
+        /* Draw boundary line */
+        auto itNext = it;
+        itNext++;
+        if(itNext != boundaryPoints.end()) {
+            line(img, Point(it->first, it->second), Point(itNext->first, itNext->second), Scalar(255, 0, 255), 5);
+        }
     }
 
     imwrite("floor_boundary.jpg", img);
