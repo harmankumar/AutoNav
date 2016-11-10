@@ -4,3 +4,4 @@ Obstacle Avoidance and FreeSpace Detection:
 
 http://www.cs.cmu.edu/~mmv/papers/05sbai-juan.pdf
 
+https://arxiv.org/pdf/1306.1144.pdf
