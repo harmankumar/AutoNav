@@ -321,7 +321,6 @@ int main(int argc, char const *argv[])
 
     imwrite("floor_boundary.jpg", img);
 
-
     // int distanceToObstacle = findDistance();
     // cout << "Distance to obstacle: " << distanceToObstacle << " pixels" << endl;
 

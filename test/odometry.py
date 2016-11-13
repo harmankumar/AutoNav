@@ -22,6 +22,7 @@ BOT_SPEED = 4000
 WHEEL_RADIUS = 0.08912 #0.16 #in metres
 ENC_TICKS_360 = 1250
 TICK_TO_DIST = 2 * math.pi * WHEEL_RADIUS/ ENC_TICKS_360
+angleDelta = BOT_SPEED *.001
 DELTA = 0.0000;
 
 host = ni.ifaddresses('wlan0')[2][0]['addr']
@@ -43,11 +44,12 @@ def initsocket():
 def getYaw():
     global s
     try:
-        message, address = s.recvfrom(4096)
-        orient = float((message.split())[1])
-        orient = orient * 180/3.14;
-
-        return orient
+        #message, address = s.recvfrom(4096)
+        stuff = s.recvfrom(4096)
+        #orient = float((message.split())[1])
+        #orient = orient * 180/3.14;
+        return stuff
+        #return orient
     except (KeyboardInterrupt, SystemExit):
         raise
     except:
@@ -73,7 +75,9 @@ def moveDistance(direction,dis): # @param direction: 1 -> forward and -1 -> back
         temp=readMotorTicks()
         left= temp[0]
         right=temp[1]
-        if((left-initleft)*TICK_TO_DIST > dis-distDelta):
+        distanceMoved = ((left-initleft) + (right-initright) )* TICK_TO_DIST/2
+        print distanceMoved 
+        if(distanceMoved > dis-distDelta):
             break
 
     cmd.stop()
@@ -84,23 +88,27 @@ def rotate(direction,angle): # @param direction: 1 -> left and -1 -> right
     initYaw =  mc.getYaw()
     cmd.forward(speed=BOT_SPEED)
     if(direction==1):
-        cmd.turn(0.1)
+        cmd.turn(0.5)
     elif(direction==-1):
-        cmd.turn(-0.4)
+        cmd.turn(-0.5)
 
     while(True):
         yaw = mc.getYaw()
         print yaw
-        if(abs(initYaw - yaw) > angle ):
+        if(abs(initYaw - yaw) > angle - angleDelta):
             break
     cmd.stop()
     cmd.stop()
 
 def main():
     init()
+    #initleft = readMotorTicks()[0]
     #while(True):
-     # print mc.getYaw()-17
-    #moveDistance(1,1)
+    #	print mc.getYaw()
+     #print retval
+     #temp = readMotorTicks()
+     #print (temp[0]- initleft) * TICK_TO_DIST
+    #moveDistance(1,3)
     rotate(1,90)
 
 
