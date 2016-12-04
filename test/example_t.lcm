@@ -1,0 +1,8 @@
+package exlcm;
+struct example_t
+{
+    int64_t  timestamp;
+    int16_t currImage;
+    int16_t distance;
+    double angle;
+}

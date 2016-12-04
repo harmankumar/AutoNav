@@ -6,21 +6,23 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __exlcm_example_list_t_hpp__
-#define __exlcm_example_list_t_hpp__
+#ifndef __exlcm_example_t_hpp__
+#define __exlcm_example_t_hpp__
 
-#include <vector>
-#include "exlcm/example_t.hpp"
 
 namespace exlcm
 {
 
-class example_list_t
+class example_t
 {
     public:
-        int32_t    n;
+        int64_t    timestamp;
 
-        std::vector< exlcm::example_t > examples;
+        int16_t    currImage;
+
+        int16_t    distance;
+
+        double     angle;
 
     public:
         /**
@@ -58,7 +60,7 @@ class example_list_t
         inline static int64_t getHash();
 
         /**
-         * Returns "example_list_t"
+         * Returns "example_t"
          */
         inline static const char* getTypeName();
 
@@ -69,7 +71,7 @@ class example_list_t
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int example_list_t::encode(void *buf, int offset, int maxlen) const
+int example_t::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -83,7 +85,7 @@ int example_list_t::encode(void *buf, int offset, int maxlen) const
     return pos;
 }
 
-int example_list_t::decode(const void *buf, int offset, int maxlen)
+int example_t::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -98,74 +100,73 @@ int example_list_t::decode(const void *buf, int offset, int maxlen)
     return pos;
 }
 
-int example_list_t::getEncodedSize() const
+int example_t::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t example_list_t::getHash()
+int64_t example_t::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* example_list_t::getTypeName()
+const char* example_t::getTypeName()
 {
-    return "example_list_t";
+    return "example_t";
 }
 
-int example_list_t::_encodeNoHash(void *buf, int offset, int maxlen) const
+int example_t::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->n, 1);
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    for (int a0 = 0; a0 < this->n; a0++) {
-        tlen = this->examples[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
+    tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->currImage, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->distance, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->angle, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int example_list_t::_decodeNoHash(const void *buf, int offset, int maxlen)
+int example_t::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->n, 1);
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    this->examples.resize(this->n);
-    for (int a0 = 0; a0 < this->n; a0++) {
-        tlen = this->examples[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
+    tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->currImage, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->distance, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->angle, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int example_list_t::_getEncodedSizeNoHash() const
+int example_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    for (int a0 = 0; a0 < this->n; a0++) {
-        enc_size += this->examples[a0]._getEncodedSizeNoHash();
-    }
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
-uint64_t example_list_t::_computeHash(const __lcm_hash_ptr *p)
+uint64_t example_t::_computeHash(const __lcm_hash_ptr *)
 {
-    const __lcm_hash_ptr *fp;
-    for(fp = p; fp != NULL; fp = fp->parent)
-        if(fp->v == example_list_t::getHash)
-            return 0;
-    const __lcm_hash_ptr cp = { p, (void*)example_list_t::getHash };
-
-    uint64_t hash = 0x350c81d61683c1c0LL +
-         exlcm::example_t::_computeHash(&cp);
-
+    uint64_t hash = 0x7a949b65fc713b3bLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

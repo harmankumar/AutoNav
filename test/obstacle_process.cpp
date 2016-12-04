@@ -7,15 +7,14 @@
 
 using namespace cv;
 using namespace std;
+typedef pair<int, int> floorpoint;
 
 vector<floorpoint> floorPoints;
 vector<floorpoint> floorPointsCoarse;
-vector<floorpoint> boundaryPoints;
-const int WindowSize = 200;
+set<floorpoint> boundaryPoints;
+const int WindowSize = 300;
 const int WindowSizeCoarse = 500;
 const int StepSize = 40;
-const int FLOOR_DIFF_THRES = 15;
-const int FLOOR_COLOR_THRES = 100;
 const float EMPTY_THRES = 0.05;
 
 map<floorpoint, int> ComponentNumber;
@@ -23,20 +22,56 @@ int numComponents = 0;
 
 Mat img;
 int imagewidth, imageheight;
+Mat img_hsi;
 int currImage;
 
-class Handler
- {
-     public:
-         ~Handler() {}
+// construct HSI image from RGB image
+void constructHSIImage() {
+    img_hsi = Mat(img.rows, img.cols, img.type());
 
-        void handleMessage(const lcm::ReceiveBuffer* rbuf,
-                const std::string& chan,
-                const exlcm::example_t* msg)
+    float r, g, b, h, s, in;
+
+    for(int i = 0; i < img.rows; i++)
+    {
+        for(int j = 0; j < img.cols; j++)
         {
-            currImage = (int)msg->imageId;
+            b = img.at<Vec3b>(i, j)[0];
+            g = img.at<Vec3b>(i, j)[1];
+            r = img.at<Vec3b>(i, j)[2];
+
+            in = (b + g + r) / 3;
+
+            int min_val = 0;
+            min_val = std::min(r, std::min(b,g));
+
+            s = 1 - 3*(min_val/(b + g + r));
+            if(s < 0.00001)
+            {
+                s = 0;
+            } else if(s > 0.99999){
+                s = 1;
+            }
+
+            if(s != 0)
+            {
+                h = 0.5 * ((r - g) + (r - b)) / sqrt(((r - g)*(r - g)) + ((r - b)*(g - b)));
+                h = acos(h);
+
+                if(b <= g)
+                {
+                    h = h;
+                } else {
+                    h = ((360 * 3.14159265) / 180.0) - h;
+                }
+            }
+
+            img_hsi.at<Vec3b>(i, j)[0] = (h * 180) / 3.14159265;
+            img_hsi.at<Vec3b>(i, j)[1] = s*100;
+            img_hsi.at<Vec3b>(i, j)[2] = in;
         }
-};
+    }
+    imwrite("floor_hsi.jpg", img_hsi);
+}
 
 // dfs through points in image
 void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoints) {
@@ -56,23 +91,8 @@ void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoi
         if(allPoints.count(newPoint) and (!visited.count(newPoint)))
             dfs(newPoint, visited, allPoints);
     }
-
 }
 
-
-vector<int> boundaryPoints()
-{
-  // Keep a sliding window of size k and have the minimum of that sliding window
-  // The best one (farthest is the direction we move in)
-
-  dequeue<Point>; // Point is some datatype
-
-  for(auto it: input)
-  {
-
-
-  }
-}
 
 // Mark connected components in point vector
 void mark(vector<floorpoint>& v) {
@@ -93,11 +113,14 @@ void mark(vector<floorpoint>& v) {
     }
 }
 
+
 // Get yaw angle of bot
-double getZAngle(Point point, double imagewidth, double focalLength) {
-    double theta = atan((double)(point.x - imagewidth)/focalLength);
+// TODO: test
+double getZAngle(floorpoint point, double imagewidth, double focalLength) {
+    double theta = atan((double)(point.first - imagewidth)/focalLength);
     return theta;
 }
+
 
 // Mean point of largest component - to follow
 floorpoint getMeanLargestComp(int num) {
@@ -124,23 +147,71 @@ floorpoint getMeanLargestComp(int num) {
     cout << "Max component: " << maxComponent << endl;
     cout << "Number of points: " << maxPoints << endl;
 
+    map<int, vector<int> > relevantComponent;
     // find center of connected component
     double target_x = 0, target_y = 0; int n = 0;
+    map<int, int > meanPath;
+
     for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
         if(iterator->second == maxComponent) {
             n++;
             // cout << iterator->first.first << " " << iterator->first.second << endl;
-            target_x += iterator->first.first;
-            target_y += iterator->first.second;
+            /* Forming relevant component */
+            auto point = iterator->first;
+            relevantComponent[point.second].push_back(point.first);
+
+            /* Mean Calculation */
+            target_x += point.first;
+            target_y += point.second;
         }
     }
+
+
+    for(auto it: relevantComponent)
+    {
+        int mean  = 0;
+        for(auto it1 : it.second)
+            mean += it1;
+
+        mean /= (it.second).size();
+        meanPath[it.first] = mean;
+    }
+
+    /* Draw mean path */
+    auto it = meanPath.begin();
+    uint pathCount = 0;
+    const int SKIP = 3;
+    while(it != meanPath.end()) {
+        // // Draw points
+        // circle(img, Point(it->second, it->first), 10, Scalar(255, 0, 0), -1);
+        // Draw path
+        auto itNext = it;
+        if(pathCount + SKIP < meanPath.size()) {
+            advance(itNext, SKIP);
+            if(itNext != meanPath.end()) {
+                auto currPoint = Point(it->second, it->first);
+                auto nextPoint = Point(itNext->second, itNext->first);
+                line(img, currPoint, nextPoint, Scalar(255, 0 ,0), 5);
+            }
+        }
+        else {
+            break;
+        }
+        advance(it, SKIP);
+        pathCount += SKIP;
+        if(pathCount >= meanPath.size())
+            break;
+    }
+
     cout << n << endl;
-    target_x = target_x / numPoints[maxComponent];
-    target_y = target_y / numPoints[maxComponent];
+    target_x /= numPoints[maxComponent];
+    target_y /= numPoints[maxComponent];
     return make_pair((int)target_x, (int)target_y);
 }
 
-void checkGround(bool coarse) {
+
+// sliding window algorithm over HSI image of ground for free space modelling
+void checkGroundHSI(bool coarse) {
     int N;
     if(coarse) {
         N = WindowSizeCoarse / StepSize;
@@ -151,6 +222,10 @@ void checkGround(bool coarse) {
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
+    const float HUE_THRES = 20;
+    const float SAT_THRES = 40;
+    const float INTENSITY_THRES = 150;
+
     int fCount[w][h];   // floor count dp in boxes
     int nfCount[w][h];  // non-floor count dp in boxes
     memset(fCount, -1, sizeof(fCount));
@@ -158,7 +233,8 @@ void checkGround(bool coarse) {
 
     int countFloor = 0, countNFloor = 0;
     int start_i, end_i, start_j, end_j;
-    Vec3b pixel; int pixel_b, pixel_g, pixel_r, pixel_avg;
+    Vec3b pixel_bgr; int pixel_b, pixel_g, pixel_r;
+    Vec3b pixel_hsi; float pixel_h, pixel_s, pixel_i;
     // Count number of floor and non-floor pixels in boxes of image
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
@@ -167,12 +243,16 @@ void checkGround(bool coarse) {
             start_j = j * StepSize; end_j = start_j + StepSize;
             for (int k = start_i; k < end_i; k++) {
                 for (int l = start_j; l < end_j; l++) {
-                    pixel = img.at<Vec3b>(l, k);
-                    pixel_b = (int)pixel.val[0];
-                    pixel_g = (int)pixel.val[1];
-                    pixel_r = (int)pixel.val[2];
-                    pixel_avg = (pixel_b + pixel_g + pixel_r)/3;
-                    if(pixel_b > FLOOR_COLOR_THRES and pixel_g > FLOOR_COLOR_THRES and pixel_r > FLOOR_COLOR_THRES and abs(pixel_b - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_g - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_r - pixel_avg) < FLOOR_DIFF_THRES) {
+                    pixel_bgr = img.at<Vec3b>(l, k);
+                    pixel_b = (int)pixel_bgr.val[0];
+                    pixel_g = (int)pixel_bgr.val[1];
+                    pixel_r = (int)pixel_bgr.val[2];
+                    pixel_hsi = img_hsi.at<Vec3b>(l, k);
+                    pixel_h = pixel_hsi.val[0];
+                    pixel_s = pixel_hsi.val[1];
+                    pixel_i = pixel_hsi.val[2];
+                    const int FLOOR_COLOR_THRES = 150;
+                    if((pixel_s < SAT_THRES) /*and (pixel_r > FLOOR_COLOR_THRES)*/) {
                         countFloor++;
                     }
                     else {
@@ -210,8 +290,6 @@ void checkGround(bool coarse) {
         }
         // cout << endl;
     }
-
-
 }
 
 // Get boundary points
@@ -222,7 +300,7 @@ void getBoundaryPoints() {
     for(auto rit = floorPoints.rbegin(); rit != floorPoints.rend(); rit++) {
         // cout << point.first << " " << point.second << endl;
         if(rit->first != xBound) {
-            boundaryPoints.push_back(make_pair(xBound, yBound));
+            boundaryPoints.insert(make_pair(xBound, yBound));
             xBound = rit->first;
             yBound = rit->second;
         }
@@ -234,66 +312,9 @@ void getBoundaryPoints() {
     }
 }
 
-void findTileLines() {
-    Mat gray, filt, thres;
-    // Convert to grayscale
-    cvtColor(img, gray, CV_BGR2GRAY);
-    // Median filter
-    medianBlur(gray, filt, 5);
-    // Threshold image
-    // adaptiveThreshold(filt, thres, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 2);
-    Canny(filt, thres, 50, 125);
-    imwrite("floor_thres.jpg", thres);
-    // Find hough transform
-    vector<Vec2f> lines;
-    HoughLines(thres, lines, 1, CV_PI/180, 500, 0, 0 );
-    cout << lines.size() << endl;
-
-    vector<pair<float, float> > line_params;
-    for(auto tile_line:lines)
-    {
-        line_params.push_back(make_pair(tile_line[0], tile_line[1]));
-    }
-    sort(line_params.begin(), line_params.end());
-
-    // Reduce lines by choosing only 1 from each cluster
-    vector<pair<float, float> > line_params_unique;
-    float cluster_thres = 10.0;
-    float current_cluster_rho = line_params[0].first;
-    line_params_unique.push_back(line_params[0]);
-
-    for(auto params:line_params) {
-        if(params.first - current_cluster_rho > cluster_thres) {
-            current_cluster_rho = params.first;
-            line_params_unique.push_back(params);
-            cluster_thres = max((float)(0.05 * current_cluster_rho), cluster_thres);
-        }
-    }
-
-    // draw lines
-    const int len = 3000;
-
-    for(auto tile_param: line_params_unique)
-    {
-        float rho = tile_param.first, theta = tile_param.second;
-        cout << rho << " " << theta << endl;
-        Point pt1, pt2;
-        double a = cos(theta), b = sin(theta);
-        double x0 = a*rho, y0 = b*rho;
-        //Adding stuff!
-        pt1.x = cvRound(x0 + len*(-b));
-        pt1.y = cvRound(y0 + len*(a));
-        pt2.x = cvRound(x0 - len*(-b));
-        pt2.y = cvRound(y0 - len*(a));
-        line( img, pt1, pt2, Scalar(0,0,255), 2, CV_AA);
-    }
-    imwrite("floor_lines.jpg", img);
-}
-
 // finds distance(pixels) of obstacle in given direction
 // Direction of bot is currently assumed to be same as camera
-int findDistance()
-{
+int findDistance() {
     const int X_SPAN = 6 * StepSize;  // Why?
 
     vector<int> pointYVec;
@@ -307,16 +328,32 @@ int findDistance()
     return 0;
 }
 
-
 // Check if file exists
 inline bool exists (const std::string& name) {
-  struct stat buffer;
-  return (stat (name.c_str(), &buffer) == 0);
+    if (FILE *file = fopen(name.c_str(), "r")) {
+          fclose(file);
+          return true;
+      } else {
+          return false;
+      }
 }
 
+class Handler
+ {
+     public:
+         ~Handler() {}
+
+        void handleMessage(const lcm::ReceiveBuffer* rbuf,
+                const std::string& chan,
+                const exlcm::example_t* msg)
+        {
+            currImage = (int)msg->currImage;
+        }
+};
 
 int main(int argc, char const *argv[])
 {
+    const double focalLength = 1.0;
     lcm::LCM lcm;
     if(!lcm.good())
        return 1;
@@ -332,14 +369,23 @@ int main(int argc, char const *argv[])
       fileName = to_string(currImage) + ".jpg";
       if(exists(fileName)) {
         img = imread(fileName, CV_LOAD_IMAGE_COLOR);
+        cvtColor(img, img_hsi, CV_BGR2HSV);
         imagewidth = img.cols;
         imageheight = img.rows;
 
-        checkGround();
+        checkGroundHSI(true);
+        checkGroundHSI(false);
+        mark(floorPointsCoarse);
+
         data.distance = findDistance();
-        data.angle = getZAngle()
+
+        floorpoint target = getMeanLargestComp(numComponents);
+        data.angle = getZAngle(target, imagewidth, focalLength);
         lcm.publish("PROCESSING_RECEIVE", &data);
         i++;
+      }
+      else {
+          cerr << "File not found" << endl;
       }
 
     }

@@ -9,8 +9,6 @@
 #ifndef __exlcm_example_t_hpp__
 #define __exlcm_example_t_hpp__
 
-#include <vector>
-#include <string>
 
 namespace exlcm
 {
@@ -20,17 +18,11 @@ class example_t
     public:
         int64_t    timestamp;
 
-        double     position[3];
+        int16_t    currImage;
 
-        double     orientation[4];
+        int16_t    distance;
 
-        int32_t    num_ranges;
-
-        std::vector< int16_t > ranges;
-
-        std::string name;
-
-        int8_t     enabled;
+        double     angle;
 
     public:
         /**
@@ -131,25 +123,13 @@ int example_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
+    tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->currImage, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
+    tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->distance, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->num_ranges, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->num_ranges > 0) {
-        tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->ranges[0], this->num_ranges);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    char* name_cstr = (char*) this->name.c_str();
-    tlen = __string_encode_array(buf, offset + pos, maxlen - pos, &name_cstr, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->enabled, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->angle, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -162,29 +142,13 @@ int example_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
+    tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->currImage, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
+    tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->distance, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->num_ranges, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->num_ranges) {
-        this->ranges.resize(this->num_ranges);
-        tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->ranges[0], this->num_ranges);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    int32_t __name_len__;
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &__name_len__, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-    if(__name_len__ > maxlen - pos) return -1;
-    this->name.assign(((const char*)buf) + offset + pos, __name_len__ - 1);
-    pos += __name_len__;
-
-    tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->enabled, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->angle, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -194,18 +158,15 @@ int example_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 3);
-    enc_size += __double_encoded_array_size(NULL, 4);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int16_t_encoded_array_size(NULL, this->num_ranges);
-    enc_size += this->name.size() + 4 + 1;
-    enc_size += __boolean_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t example_t::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x1baa9e29b0fbaa8bLL;
+    uint64_t hash = 0x7a949b65fc713b3bLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 
