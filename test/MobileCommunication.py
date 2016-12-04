@@ -24,7 +24,7 @@ def getYaw():
     try:
         message, address = s.recvfrom(4096)
         orient = float((message.split())[1])
-        orient = orient * 180/math.pi;
+        orient = orient * 180/math.pi
 
         return orient
     except (KeyboardInterrupt, SystemExit):

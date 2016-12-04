@@ -14,23 +14,25 @@ from cgbot.detect import motorcontroller
 from cgbot.sensors import Orientation
 import control_servo as cs
 import MobileCommunication as mc
-import socket, traceback
+import socket
+import traceback
 import netifaces as ni
 
 SLEEP_TIME = 0.05
 BOT_SPEED = 4000
-WHEEL_RADIUS = 0.08912 #0.16 #in metres
+WHEEL_RADIUS = 0.08912  # 0.16 #in metres
 ENC_TICKS_360 = 1250
-TICK_TO_DIST = 2 * math.pi * WHEEL_RADIUS/ ENC_TICKS_360
-DELTA = 0.0000;
+TICK_TO_DIST = 2 * math.pi * WHEEL_RADIUS / ENC_TICKS_360
+DELTA = 0.0000
 
 host = ni.ifaddresses('wlan0')[2][0]['addr']
-#print ip  # should print "192.168.100.37
+# print ip  # should print "192.168.100.37
 # Note that the IP Address and Port in this script and the script on the Mobile Phone should match.
-#host = "10.192.46.131"   #IP Address of this Machine
+# host = "10.192.46.131"   #IP Address of this Machine
 port = 3400
 
 s = None
+
 
 def initsocket():
     global s
@@ -40,12 +42,13 @@ def initsocket():
     s.bind((host, port))
     return s
 
+
 def getYaw():
     global s
     try:
         message, address = s.recvfrom(4096)
         orient = float((message.split())[1])
-        orient = orient * 180/3.14;
+        orient = orient * 180 / 3.14
 
         return orient
     except (KeyboardInterrupt, SystemExit):
@@ -54,55 +57,79 @@ def getYaw():
         traceback.print_exc()
 
 
-def init():
+def initOdometry():
     rbt.connect(motorcontroller())
     mc.initsocket()
 
+
 def readMotorTicks():
     temp = rbt.readTick()
-    return (temp[0][1],temp[1][1])
+    return (temp[0][1], temp[1][1])
 
-def moveDistance(direction,dis): # @param direction: 1 -> forward and -1 -> backward
 
-    initleft= readMotorTicks()[0]
+def moveForward():
+    cmd.forward(speed=BOT_SPEED)
+
+
+def stopBot():
+    cmd.stop()
+    cmd.stop()
+    cmd.stop()
+
+
+def moveDistance(direction, distance):
+    """ @param direction: 1 -> forward and -1 -> backward """
+
+    initleft = readMotorTicks()[0]
     initright = readMotorTicks()[1]
     cmd.forward(speed=BOT_SPEED)
-    distDelta = DELTA*BOT_SPEED
+    distDelta = DELTA * BOT_SPEED
 
     while(True):
-        temp=readMotorTicks()
-        left= temp[0]
-        right=temp[1]
-        if((left-initleft)*TICK_TO_DIST > dis-distDelta):
+        temp = readMotorTicks()
+        left = temp[0]
+        right = temp[1]
+        if((left - initleft) * TICK_TO_DIST > distance - distDelta):
             break
 
     cmd.stop()
     cmd.stop()
     cmd.stop()
 
-def rotate(direction,angle): # @param direction: 1 -> left and -1 -> right
-    initYaw =  mc.getYaw()
+
+def rotate(angle):
+    """
+    angle -> signed double value in degree
+    direction: 1 -> left and -1 -> right
+    """
+
+    sign = lambda a: (a > 0) - (a < 0)
+    direction = sign(angle)
+    angle = abs(angle)
+
+    initYaw = mc.getYaw()
     cmd.forward(speed=BOT_SPEED)
-    if(direction==1):
-        cmd.turn(0.1)
-    elif(direction==-1):
+    if(direction == 1):
+        cmd.turn(0.4)
+    elif(direction == -1):
         cmd.turn(-0.4)
 
     while(True):
         yaw = mc.getYaw()
         print yaw
-        if(abs(initYaw - yaw) > angle ):
+        if(abs(initYaw - yaw) > angle):
             break
     cmd.stop()
     cmd.stop()
 
-def main():
-    init()
-    #while(True):
-     # print mc.getYaw()-17
-    #moveDistance(1,1)
-    rotate(1,90)
-
-
-if __name__ == '__main__':
-    main()
+# TEST
+# def main():
+#     init()
+#     # while(True):
+#     # print mc.getYaw()-17
+#     # moveDistance(1,1)
+#     rotate(1, 90)
+#
+#
+# if __name__ == '__main__':
+#     main()

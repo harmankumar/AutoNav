@@ -4,22 +4,14 @@ import sys
 import os
 import numpy as np
 import pyfly2
-import cgbot
-from cgbot.commands import cmd
 import subprocess
 from imports import WrapperForPointGray
-from EncoderReading import *
-from cgbot.redisdb import rdb
-from cgbot.robot import rbt
-from cgbot.detect import motorcontroller
-from cgbot.sensors import Orientation
-import control_servo as cs
-import MobileCommunication as mc
+from odometry import *
 import lcm
 from exlcm import example_t
 
 
-#cs.rotate(angle)
+# cs.rotate(angle)
 
 def orient():
     compass = Orientation()
@@ -30,10 +22,11 @@ BOT_SPEED = 4000
 CUTOFF_DISTANCE = 1.0
 THRESHOLD_ANGLE = 0.1  # in radians
 SLEEP_TIME = 0.05
-PROCESSING_INTERVAL = 1
+PROCESSING_INTERVAL = 0.5
 
 turnAngle = 0
 distanceToObstacle = 0
+
 
 def init():
     process1 = subprocess.call('cd /home/piyush/run-bot', shell=True)
@@ -86,6 +79,8 @@ calibrate_angle_list = []
 calibrationDirection = 1
 
 # move bot from current position, orientation towards given target
+
+
 def moveTowardsTarget(Rvec, Tvec):
     # Move towards the object for CALIBRATION_SLEEP_TIME
     CALIBRATION_TURN_AMT = 0.3
@@ -125,11 +120,13 @@ def moveTowardsTarget(Rvec, Tvec):
     time.sleep(CALIBRATION_SLEEP_TIME)
     return
 
+
 def readMotorTicks():
     tick = rbt.readTick()
-    return (tick[0][1],tick[1][1])
+    return (tick[0][1], tick[1][1])
 
-def my_handler(channel, data):
+
+def msg_handler(channel, data):
     global turnAngle
     global distanceToObstacle
     msg = example_t.decode(data)
@@ -143,14 +140,9 @@ def my_handler(channel, data):
 def main():
     global calibrateMode
     global turnMode
-    rbt.connect(motorcontroller())
 
-    lc = lcm.LCM()
-    subscription = lc.subscribe("PROCESSING_RECEIVE", my_handler)
-
-    mc.initsocket()
-    # print mc.getYaw()
-    #cs.write_servo(0)
+    lc = lcm.LCM()  # Create object of lcm library
+    subscription = lc.subscribe("PROCESSING_RECEIVE", msg_handler)
 
     start_time = time.time()
     counter = 0
@@ -158,6 +150,7 @@ def main():
     while(True):
         end_time = time.time()
         if(end_time - start_time > PROCESSING_INTERVAL):
+            stopBot()  # Stop the bot during processing
             frame = camera.GrabNumPyImage('bgr')
             cv2.imwrite(str(counter) + ".jpg", frame)
             # TODO Delete previous image
@@ -169,11 +162,18 @@ def main():
             start_time = time.time()    # Restart count
 
         counter += 1
+        global turnAngle
+        print turnAngle
+        ANGLE_THRES = 0.1
+        if(turnAngle > ANGLE_THRES):    # Turn bot (sharply) in given direction
+            rotate(turnAngle * 180/math.pi)
+        else:
+            moveForward()
+
         # TODO handle bot movement
         time.sleep(SLEEP_TIME)
 
-
 if __name__ == '__main__':
-    #orient()
-    #init()
+    # orient()
+    # init()
     main()
