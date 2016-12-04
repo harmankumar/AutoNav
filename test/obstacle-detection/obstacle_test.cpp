@@ -223,7 +223,7 @@ void checkGround(bool coarse) {
     const int h = imageheight / StepSize;
 
     const int FLOOR_DIFF_THRES = 15;
-    const int FLOOR_COLOR_THRES = 100;
+    const int FLOOR_COLOR_THRES = 130;
 
     int fCount[w][h];   // floor count dp in boxes
     int nfCount[w][h];  // non-floor count dp in boxes
@@ -232,7 +232,7 @@ void checkGround(bool coarse) {
 
     int countFloor = 0, countNFloor = 0;
     int start_i, end_i, start_j, end_j;
-    Vec3b pixel; int pixel_b, pixel_g, pixel_r, pixel_avg;
+    Vec3b pixel_bgr; int pixel_b, pixel_g, pixel_r, pixel_avg;
     // Count number of floor and non-floor pixels in boxes of image
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
@@ -241,10 +241,10 @@ void checkGround(bool coarse) {
             start_j = j * StepSize; end_j = start_j + StepSize;
             for (int k = start_i; k < end_i; k++) {
                 for (int l = start_j; l < end_j; l++) {
-                    pixel = img.at<Vec3b>(l, k);
-                    pixel_b = (int)pixel.val[0];
-                    pixel_g = (int)pixel.val[1];
-                    pixel_r = (int)pixel.val[2];
+                    pixel_bgr = img.at<Vec3b>(l, k);
+                    pixel_b = (int)pixel_bgr.val[0];
+                    pixel_g = (int)pixel_bgr.val[1];
+                    pixel_r = (int)pixel_bgr.val[2];
                     pixel_avg = (pixel_b + pixel_g + pixel_r)/3;
                     if(pixel_b > FLOOR_COLOR_THRES and pixel_g > FLOOR_COLOR_THRES and pixel_r > FLOOR_COLOR_THRES and abs(pixel_b - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_g - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_r - pixel_avg) < FLOOR_DIFF_THRES) {
                         countFloor++;
@@ -298,7 +298,7 @@ void checkGroundHSI(bool coarse) {
     const int h = imageheight / StepSize;
 
     const float HUE_THRES = 20;
-    const float SAT_THRES = 50;
+    const float SAT_THRES = 40;
     const float INTENSITY_THRES = 150;
 
     int fCount[w][h];   // floor count dp in boxes
@@ -308,7 +308,8 @@ void checkGroundHSI(bool coarse) {
 
     int countFloor = 0, countNFloor = 0;
     int start_i, end_i, start_j, end_j;
-    Vec3b pixel; float pixel_h, pixel_s, pixel_i;
+    Vec3b pixel_bgr; int pixel_b, pixel_g, pixel_r;
+    Vec3b pixel_hsi; float pixel_h, pixel_s, pixel_i;
     // Count number of floor and non-floor pixels in boxes of image
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
@@ -317,11 +318,16 @@ void checkGroundHSI(bool coarse) {
             start_j = j * StepSize; end_j = start_j + StepSize;
             for (int k = start_i; k < end_i; k++) {
                 for (int l = start_j; l < end_j; l++) {
-                    pixel = img_hsi.at<Vec3b>(l, k);
-                    pixel_h = pixel.val[0];
-                    pixel_s = pixel.val[1];
-                    pixel_i = pixel.val[2];
-                    if(pixel_s < SAT_THRES) {
+                    pixel_bgr = img.at<Vec3b>(l, k);
+                    pixel_b = (int)pixel_bgr.val[0];
+                    pixel_g = (int)pixel_bgr.val[1];
+                    pixel_r = (int)pixel_bgr.val[2];
+                    pixel_hsi = img_hsi.at<Vec3b>(l, k);
+                    pixel_h = pixel_hsi.val[0];
+                    pixel_s = pixel_hsi.val[1];
+                    pixel_i = pixel_hsi.val[2];
+                    const int FLOOR_COLOR_THRES = 150;
+                    if((pixel_s < SAT_THRES) /*and (pixel_r > FLOOR_COLOR_THRES)*/) {
                         countFloor++;
                     }
                     else {
@@ -471,7 +477,7 @@ int main(int argc, char const *argv[])
     cout << "No. of coarse floor points: " << floorPointsCoarse.size() << endl;
     for(auto point: floorPointsCoarse) {
         // cout << point;
-        circle(img, Point(point.first, point.second), 10, Scalar(0, 255, 0), -1);
+        circle(img, Point(point.first, point.second), 7, Scalar(0, 255, 0), -1);
     }
 
     // Mark connected components in points
@@ -482,7 +488,7 @@ int main(int argc, char const *argv[])
     floorpoint target = getMeanLargestComp(numComponents);
     // cout << target.first << " " << target.second << endl;
     Point targetPoint(target.first, target.second);
-    circle(img, targetPoint, 30, Scalar(0, 0, 255), -1);
+    circle(img, targetPoint, 15, Scalar(0, 0, 255), -1);
 
     // Get Boundary points
     getBoundaryPoints();
@@ -496,7 +502,7 @@ int main(int argc, char const *argv[])
         }
     }
 
-    imwrite("floor_boundary.jpg", img);
+    imwrite(argv[2], img);
 
 
     // int distanceToObstacle = findDistance();
