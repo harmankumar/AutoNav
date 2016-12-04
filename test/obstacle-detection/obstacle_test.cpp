@@ -504,7 +504,6 @@ int main(int argc, char const *argv[])
 
     imwrite(argv[2], img);
 
-
     // int distanceToObstacle = findDistance();
     // cout << "Distance to obstacle: " << distanceToObstacle << " pixels" << endl;
 
