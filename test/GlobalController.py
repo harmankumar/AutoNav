@@ -152,6 +152,7 @@ def main():
         if(end_time - start_time > PROCESSING_INTERVAL):
             stopBot()  # Stop the bot during processing
             frame = camera.GrabNumPyImage('bgr')
+            # TODO: Undistort frame
             cv2.imwrite(str(counter) + ".jpg", frame)
             # TODO Delete previous image
             msg = example_t()
