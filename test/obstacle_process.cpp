@@ -315,17 +315,12 @@ void getBoundaryPoints() {
 // finds distance(pixels) of obstacle in given direction
 // Direction of bot is currently assumed to be same as camera
 int findDistance() {
-    const int X_SPAN = 6 * StepSize;  // Why?
+    int minYpoint;
+    // for(auto point: boundaryPoints) {
+    //
+    // }
 
-    vector<int> pointYVec;
-    for(auto point: floorPoints) {
-        if(abs(point.first - imagewidth) < X_SPAN) {
-            pointYVec.push_back(point.first);
-        }
-    }
-    sort(pointYVec.begin(), pointYVec.end());
-
-    return 0;
+    return minYpoint;
 }
 
 // Check if file exists
@@ -377,13 +372,14 @@ int main(int argc, char const *argv[])
         checkGroundHSI(false);
         mark(floorPointsCoarse);
 
-        data.distance = findDistance();
-
+        getBoundaryPoints();
+        data.distance = imageheight - findDistance();
+ minYpoint;
         floorpoint target = getMeanLargestComp(numComponents);
-        data.angle = getZAngle(target, imagewidth, focalLength);
-        lcm.publish("PROCESSING_RECEIVE", &data);
+        // data.a  ngle = getZAngle(target, imagewidth, focalLength);
+        // lcm.publish("PROCESSING_RECEIVE", &data);
         i++;
-      }
+     minYpoint}
       else {
           cerr << "File not found" << endl;
       }
