@@ -13,6 +13,7 @@ lib/
 share/
 output/
 test/cgbot
+test/undistort/Samples
 obstacle_test
 *.mp4
 *.jpg
