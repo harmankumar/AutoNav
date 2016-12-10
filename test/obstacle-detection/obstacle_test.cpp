@@ -2,6 +2,8 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "../undistort/undistort.h"
+#include "../undistort/fishcam.h"
 
 using namespace cv;
 using namespace std;
@@ -461,7 +463,21 @@ int findDistance() {
 
 int main(int argc, char const *argv[])
 {
-    img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    std::string s = "../undistort/calib_results_flycap.txt";
+    FishOcam f;
+    f.init(s);
+    int hout;
+    const int wout = f.width;
+    double hfov, vfov, focal;
+    f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
+    Size S = Size(wout, hout);
+    img = Mat(S, CV_8UC3);
+
+    // Undistort image
+    Mat img_in = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    f.WarpImage(img_in, img);
+
+    // img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
     // constructHSIImage();    // construct img_hsi
     cvtColor(img, img_hsi, CV_BGR2HSV);
     // imwrite("floor_hsi.jpg", img_hsi);

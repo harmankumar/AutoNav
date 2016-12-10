@@ -383,7 +383,7 @@ int main(int argc, char const *argv[])
 
         imagewidth = img.cols;
         imageheight = img.rows;
-        
+
         // Convert to hsv color space
         cvtColor(img, img_hsi, CV_BGR2HSV);
 
