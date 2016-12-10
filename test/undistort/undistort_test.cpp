@@ -18,9 +18,9 @@ int main(int argc, char const *argv[]) {
   f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
   std::cout << "Focal is " << focal << "\n";
   std::cout << "Hout is " << hout << "\n";
-  Size S = cv::Size(wout, hout);
+  Size S = Size(wout, hout);
   Mat image = imread(argv[1], CV_LOAD_IMAGE_COLOR);
-  Mat image2(cv::Size(wout, hout), CV_8UC3);
+  Mat image2(Size(wout, hout), CV_8UC3);
 
   f.WarpImage(image, image2);   // undistort image
 

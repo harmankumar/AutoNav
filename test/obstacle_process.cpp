@@ -4,6 +4,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <lcm/lcm-cpp.hpp>
 #include "exlcm/example_t.hpp"
+#include "undistort/undistort.h"
+#include "undistort/fishcam.h"
 
 using namespace cv;
 using namespace std;
@@ -243,10 +245,10 @@ void checkGroundHSI(bool coarse) {
             start_j = j * StepSize; end_j = start_j + StepSize;
             for (int k = start_i; k < end_i; k++) {
                 for (int l = start_j; l < end_j; l++) {
-                    pixel_bgr = img.at<Vec3b>(l, k);
-                    pixel_b = (int)pixel_bgr.val[0];
-                    pixel_g = (int)pixel_bgr.val[1];
-                    pixel_r = (int)pixel_bgr.val[2];
+                    // pixel_bgr = img.at<Vec3b>(l, k);
+                    // pixel_b = (int)pixel_bgr.val[0];
+                    // pixel_g = (int)pixel_bgr.val[1];
+                    // pixel_r = (int)pixel_bgr.val[2];
                     pixel_hsi = img_hsi.at<Vec3b>(l, k);
                     pixel_h = pixel_hsi.val[0];
                     pixel_s = pixel_hsi.val[1];
@@ -357,16 +359,33 @@ int main(int argc, char const *argv[])
     Handler handlerObject;
     lcm.subscribe("PROCESSING_SEND", &Handler::handleMessage, &handlerObject);
 
+    std::string s = "undistort/calib_results_flycap.txt";
+    FishOcam f;
+    f.init(s);
+    int hout;
+    const int wout = f.width;
+    double hfov, vfov, focal;
+    f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
+    Size S = Size(wout, hout);
+    img = Mat(S, CV_8UC3);
+
     int i = 0;
     string fileName;
     while(true) {
       lcm.handle();
       fileName = to_string(currImage) + ".jpg";
       if(exists(fileName)) {
-        img = imread(fileName, CV_LOAD_IMAGE_COLOR);
-        cvtColor(img, img_hsi, CV_BGR2HSV);
+        // img = imread(fileName, CV_LOAD_IMAGE_COLOR);
+
+        // Undistort image
+        Mat img_in = imread(fileName, CV_LOAD_IMAGE_COLOR);
+        f.WarpImage(img_in, img);
+
         imagewidth = img.cols;
         imageheight = img.rows;
+        
+        // Convert to hsv color space
+        cvtColor(img, img_hsi, CV_BGR2HSV);
 
         checkGroundHSI(true);
         checkGroundHSI(false);
@@ -374,12 +393,11 @@ int main(int argc, char const *argv[])
 
         getBoundaryPoints();
         data.distance = imageheight - findDistance();
- minYpoint;
         floorpoint target = getMeanLargestComp(numComponents);
         // data.a  ngle = getZAngle(target, imagewidth, focalLength);
         // lcm.publish("PROCESSING_RECEIVE", &data);
         i++;
-     minYpoint}
+     }
       else {
           cerr << "File not found" << endl;
       }
