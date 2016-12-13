@@ -2,6 +2,8 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "../undistort/undistort.h"
+#include "../undistort/fishcam.h"
 
 using namespace cv;
 using namespace std;
@@ -11,13 +13,12 @@ typedef pair<int, int> floorpoint;
 vector<floorpoint> floorPoints;
 vector<floorpoint> floorPointsCoarse;
 set<floorpoint> boundaryPoints;
-const int WindowSize = 100;
-const int WindowSizeCoarse = 225;
-const int StepSize = 25;
-const float EMPTY_THRES = 0.4;
+const int WindowSize = 300;
+const int WindowSizeCoarse = 500;
+const int StepSize = 40;
+const float EMPTY_THRES = 0.9;
 
-map<flo
-assert(not ComponentNumber.empty())orpoint, int> ComponentNumber;;
+map<floorpoint, int> ComponentNumber;
 int numComponents = 0;
 
 Mat img;
@@ -85,8 +86,7 @@ void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoi
     // if(visited.count(currPoint))
     //     return;
 
-    Compon
-    assert(not ComponentNumber.empty())[currPoint] = numComponents;;
+    ComponentNumber[currPoint] = numComponents;
     visited.insert(currPoint);
 
     for(int k=0; k<4; k++)
@@ -134,7 +134,6 @@ floorpoint getMeanLargestComp(int num) {
         numPoints[i] = 0;
     }
     int maxComponent, maxPoints;
-    assert(not ComponentNumber.empty());
     for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
         // cout << iterator->second;
         numPoints[iterator->second]++;
@@ -275,7 +274,7 @@ void checkGround(bool coarse) {
                 }
             }
             float floorRatio = ((float)countNFloor)/((float)countFloor + (float)countNFloor);
-            // cout << floorRatio << " ";
+            //cout << floorRatio << " ";
             if(floorRatio < EMPTY_THRES) {
                 if(coarse) {
                     floorPointsCoarse.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
@@ -300,7 +299,7 @@ void checkGroundHSI(bool coarse) {
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
-    const float HUE_THRES = 160;
+    const float HUE_THRES = 190;
     const float SAT_THRES = 40;
     const float INTENSITY_THRES = 150;
 
@@ -325,13 +324,14 @@ void checkGroundHSI(bool coarse) {
                     pixel_b = (int)pixel_bgr.val[0];
                     pixel_g = (int)pixel_bgr.val[1];
                     pixel_r = (int)pixel_bgr.val[2];
-                    pixel_hsi = img_hsi.at<Vec3b>(l, k);
-                    pixel_i = (int)pixel_hsi.val[0];
-                    pixel_s = (int)pixel_hsi.val[1];
-                    pixel_h = (int)pixel_hsi.val[2];
-                    // cout << pixel_h << " " << pixel_s << " " << pixel_i << " " << "\t";
+                    pixel_hsi = img_hsi.at<Vec3f>(l, k);
+                    pixel_h = (float)pixel_hsi[2];
+                    pixel_s = (float)pixel_hsi[1];
+                    pixel_i = (float)pixel_hsi[0];
+
                     const int FLOOR_COLOR_THRES = 150;
-                    if(/* (pixel_s < SAT_THRES) and */ (pixel_h > HUE_THRES)) {
+                    if(/*(pixel_s < SAT_THRES) and */ ((int)pixel_h > HUE_THRES)) {
+                        cout << pixel_hsi.val[0] << " " << pixel_hsi.val[1] << " " << pixel_hsi.val[2] << endl;
                         countFloor++;
                     }
                     else {
@@ -463,16 +463,42 @@ int findDistance() {
     return 0;
 }
 
+// dispHSVImage(Mat img) {
+//     for(int i=0; i<img.rows; i++) {
+//         for(int j=0; j<img.cols; j++) {
+//             // You can now access the pixel value with cv::Vec3b
+//             std::cout << img.at<cv::Vec3f>(i,j)[0] << " " << img.at<cv::Vec3f>(i,j)[1] << " " << img.at<cv::Vec3f>(i,j)[2] << "\t";
+//         }
+//     }
+// }
+
 int main(int argc, char const *argv[])
 {
-    img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    // std::string s = "../undistort/calib_results_flycap.txt";
+    // FishOcam f;
+    // f.init(s);
+    // int hout;
+    // const int wout = f.width;
+    // double hfov, vfov, focal;
+    // f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
+    // Size S = Size(wout, hout);
+    // img = Mat(S, CV_8UC3);
+
+    // Undistort image
+    Mat img_in = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    // f.WarpImage(img_in, img);
+    // cout << "Done undistort" << endl;
+
+    // img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
     // constructHSIImage();    // construct img_hsi
     cvtColor(img, img_hsi, CV_BGR2HSV);
-    imwrite("floor_hsi.jpg", img_hsi);
 
+    // imwrite("floor_hsi.jpg", img_hsi);
     imagewidth = img.cols;
     imageheight = img.rows;
-    // cout << imagewidth << " " << imageheight << endl;
+    cout << imagewidth << " " << imageheight << endl;
+    imwrite("undistort.jpg", img);
+    imwrite("undistort_hsi.jpg", img_hsi);
 
     checkGroundHSI(false);     // find points using fine window
     checkGroundHSI(true);     // find points using coarse window
