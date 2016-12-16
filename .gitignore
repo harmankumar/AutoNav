@@ -15,6 +15,7 @@ output/
 test/cgbot
 test/undistort/Samples
 obstacle_test
+obstacle_process
 *.mp4
 *.jpg
 *.png

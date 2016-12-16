@@ -3,6 +3,7 @@ import math
 import sys
 import os
 import numpy as np
+import cv2
 import pyfly2
 import subprocess
 from imports import WrapperForPointGray
@@ -35,6 +36,8 @@ def init():
     process3 = subprocess.Popen(['/home/piyush/run-bot/run2.sh > /dev/null'], shell=True)
     time.sleep(3)
     process4 = subprocess.call('cd /home/piyush/OpenCV3_Local/test', shell=True)
+
+    # initOdometry()  # Initialize odometry module
 
 
 # Calculates rotation matrix to euler angles
@@ -144,8 +147,34 @@ def main():
     lc = lcm.LCM()  # Create object of lcm library
     subscription = lc.subscribe("PROCESSING_RECEIVE", msg_handler)
 
+    print "Getting pyfly2 context ..."
+    context = pyfly2.Context()
+    print "Done."
+
+    # assert(not (context.num_cameras == 0))
+    print "Getting camera ...",
+    camera = context.get_camera(0)
+    print "Done."
+
+    print "Connecting to camera ...",
+    camera.Connect()
+    print "Done."
+
+    print "Querying camera information ..."
+    for k, v in camera.info.iteritems():
+        print k, v
+    print "Done."
+
+    print "Starting capture mode ...",
+    camera.StartCapture()
+    print "Done."
+
+
     start_time = time.time()
     counter = 0
+
+    turnAngle_Ref = mc.getYaw()
+    print "Reference angle:", turnAngle_Ref
 
     while(True):
         end_time = time.time()
@@ -154,19 +183,20 @@ def main():
             frame = camera.GrabNumPyImage('bgr')
             # TODO: Undistort frame
             cv2.imwrite(str(counter) + ".jpg", frame)
+            print "Done write"
             # TODO Delete previous image
             msg = example_t()
             msg.currImage = counter
             # TODO add focal length to message / result
             lc.publish("PROCESSING_SEND", msg.encode())
+			print "published by gc.py"
             lc.handle()     # Recieve angle
             start_time = time.time()    # Restart count
 
         counter += 1
         global turnAngle
-        print turnAngle
         ANGLE_THRES = 0.1
-        if(turnAngle > ANGLE_THRES):    # Turn bot (sharply) in given direction
+        if(abs(turnAngle - turnAngle_Ref) > ANGLE_THRES):    # Turn bot (sharply) in given direction
             rotate(turnAngle * 180/math.pi)
         else:
             moveForward()
@@ -174,7 +204,9 @@ def main():
         # TODO handle bot movement
         time.sleep(SLEEP_TIME)
 
+
 if __name__ == '__main__':
     # orient()
     # init()
+    initOdometry()  # Initialize odometry module
     main()

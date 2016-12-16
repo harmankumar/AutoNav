@@ -16,8 +16,7 @@ const int WindowSizeCoarse = 225;
 const int StepSize = 25;
 const float EMPTY_THRES = 0.4;
 
-map<flo
-assert(not ComponentNumber.empty())orpoint, int> ComponentNumber;;
+map<floorpoint, int> ComponentNumber;
 int numComponents = 0;
 
 Mat img;
@@ -85,8 +84,7 @@ void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoi
     // if(visited.count(currPoint))
     //     return;
 
-    Compon
-    assert(not ComponentNumber.empty())[currPoint] = numComponents;;
+    ComponentNumber[currPoint] = numComponents;
     visited.insert(currPoint);
 
     for(int k=0; k<4; k++)
@@ -122,7 +120,7 @@ void mark(vector<floorpoint>& v) {
 // Get yaw angle of bot
 // TODO: test
 double getZAngle(Point point, double imagewidth, double focalLength) {
-    double theta = atan((double)(point.x - imagewidth)/focalLength);
+    double theta = atan((double)(point.x - imagewidth/2)/focalLength);
     return theta;
 }
 
@@ -466,6 +464,12 @@ int findDistance() {
 int main(int argc, char const *argv[])
 {
     img = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+
+    // Write angles to file
+    // ofstream myfile;
+    // myfile.open("angle.txt");
+    const double focalLength = 806.74987791;
+
     // constructHSIImage();    // construct img_hsi
     cvtColor(img, img_hsi, CV_BGR2HSV);
     imwrite("floor_hsi.jpg", img_hsi);
@@ -493,6 +497,8 @@ int main(int argc, char const *argv[])
     floorpoint target = getMeanLargestComp(numComponents);
     // cout << target.first << " " << target.second << endl;
     Point targetPoint(target.first, target.second);
+    cout << argv[1] << "-> angle = " << getZAngle(targetPoint, imagewidth, focalLength) << endl;
+
     circle(img, targetPoint, 15, Scalar(0, 0, 255), -1);
 
     // Get Boundary points

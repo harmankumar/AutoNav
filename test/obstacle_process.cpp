@@ -17,7 +17,7 @@ set<floorpoint> boundaryPoints;
 const int WindowSize = 300;
 const int WindowSizeCoarse = 500;
 const int StepSize = 40;
-const float EMPTY_THRES = 0.05;
+const float EMPTY_THRES = 0.4;
 
 map<floorpoint, int> ComponentNumber;
 int numComponents = 0;
@@ -117,9 +117,8 @@ void mark(vector<floorpoint>& v) {
 
 
 // Get yaw angle of bot
-// TODO: test
 double getZAngle(floorpoint point, double imagewidth, double focalLength) {
-    double theta = atan((double)(point.first - imagewidth)/focalLength);
+    double theta = atan((double)(point.first - imagewidth/2)/focalLength);
     return theta;
 }
 
@@ -224,7 +223,7 @@ void checkGroundHSI(bool coarse) {
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
-    const float HUE_THRES = 20;
+    const float HUE_THRES = 160;
     const float SAT_THRES = 40;
     const float INTENSITY_THRES = 150;
 
@@ -350,7 +349,7 @@ class Handler
 
 int main(int argc, char const *argv[])
 {
-    const double focalLength = 1.0;
+    const double focalLength = 806.74987791;
     lcm::LCM lcm;
     if(!lcm.good())
        return 1;
@@ -359,27 +358,30 @@ int main(int argc, char const *argv[])
     Handler handlerObject;
     lcm.subscribe("PROCESSING_SEND", &Handler::handleMessage, &handlerObject);
 
-    std::string s = "undistort/calib_results_flycap.txt";
-    FishOcam f;
-    f.init(s);
-    int hout;
-    const int wout = f.width;
-    double hfov, vfov, focal;
-    f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
-    Size S = Size(wout, hout);
-    img = Mat(S, CV_8UC3);
+    // std::string s = "undistort/calib_results_flycap.txt";
+    // FishOcam f;
+    // f.init(s);
+    // int hout;
+    // const int wout = f.width;
+    // double hfov, vfov, focal;
+    // f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
+    // Size S = Size(wout, hout);
+    // img = Mat(S, CV_8UC3);
 
     int i = 0;
     string fileName;
     while(true) {
       lcm.handle();
-      fileName = to_string(currImage) + ".jpg";
+      cout << "Received" << endl;
+      fileName = "share/" + to_string(currImage) + ".jpg";
+      cerr << "Filename: " << fileName << endl;
       if(exists(fileName)) {
-        // img = imread(fileName, CV_LOAD_IMAGE_COLOR);
+        img = imread(fileName, CV_LOAD_IMAGE_COLOR);
+        cout << "Image read successful" << endl;
 
         // Undistort image
-        Mat img_in = imread(fileName, CV_LOAD_IMAGE_COLOR);
-        f.WarpImage(img_in, img);
+        // Mat img = imread(fileName, CV_LOAD_IMAGE_COLOR);
+        // f.WarpImage(img_in, img);
 
         imagewidth = img.cols;
         imageheight = img.rows;
@@ -391,12 +393,20 @@ int main(int argc, char const *argv[])
         checkGroundHSI(false);
         mark(floorPointsCoarse);
 
-        getBoundaryPoints();
-        data.distance = imageheight - findDistance();
-        floorpoint target = getMeanLargestComp(numComponents);
-        // data.a  ngle = getZAngle(target, imagewidth, focalLength);
-        // lcm.publish("PROCESSING_RECEIVE", &data);
-        i++;
+        if(!floorPointsCoarse.empty()) {
+            assert(not floorPointsCoarse.empty());
+            getBoundaryPoints();
+            data.distance = imageheight - findDistance();
+            floorpoint target = getMeanLargestComp(numComponents);
+            data.angle = getZAngle(target, imagewidth, focalLength);
+            cerr << "Angle sent: " << data.angle << endl;
+            i++;
+        }
+        else {
+            data.angle = 0;
+            cerr << "No floor points found" << endl;
+        }
+        lcm.publish("PROCESSING_RECEIVE", &data);
      }
       else {
           cerr << "File not found" << endl;

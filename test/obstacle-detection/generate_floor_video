@@ -1,7 +1,0 @@
-for file in ./floor_video/image-samples/{.,}*;
-do
-infile=$file;
-outfile="${infile/image-samples/processed}";
-./obstacle_test $infile $outfile;
-echo "$outfile";
-done

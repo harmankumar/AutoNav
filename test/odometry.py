@@ -12,7 +12,7 @@ from cgbot.redisdb import rdb
 from cgbot.robot import rbt
 from cgbot.detect import motorcontroller
 from cgbot.sensors import Orientation
-import control_servo as cs
+#import control_servo as cs
 import MobileCommunication as mc
 import socket
 import traceback
@@ -44,6 +44,11 @@ def initsocket():
     return s
 
 
+def initOdometry():
+    rbt.connect(motorcontroller())
+    mc.initsocket()
+
+
 def getYaw():
     global s
     try:
@@ -57,11 +62,6 @@ def getYaw():
         raise
     except:
         traceback.print_exc()
-
-
-def initOdometry():
-    rbt.connect(motorcontroller())
-    mc.initsocket()
 
 
 def readMotorTicks():
@@ -129,14 +129,14 @@ def rotate(angle):
 # def main():
 #     init()
 #     #initleft = readMotorTicks()[0]
-#     #while(True):
-#     #	print mc.getYaw()
+#     while(True):
+#     	print mc.getYaw()
 #      #print retval
 #      #temp = readMotorTicks()
 #      #print (temp[0]- initleft) * TICK_TO_DIST
 #     #moveDistance(1,3)
-#     rotate(1,90)
-#
-#
-# if __name__ == '__main__':
-#     main()
+#     # rotate(1,90)
+
+
+if __name__ == '__main__':
+    main()
