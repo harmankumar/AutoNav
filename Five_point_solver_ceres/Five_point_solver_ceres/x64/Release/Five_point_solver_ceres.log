@@ -1,0 +1,206 @@
+﻿Build started 2/27/2016 3:13:41 PM.
+     1>Project "H:\suvam\codes\Five_point_solver_ceres\Five_point_solver_ceres\Five_point_solver_ceres.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"G:\ceres\eigen-eigen" /IG:\ceres\include /I"G:\ceres\glog-0.3.3\glog-0.3.3\src\windows" /Zi /nologo /W3 /WX- /Ox /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt estimate_relative_pose.cpp estimate_twoview_info.cc estimate_uncalibrated_relative_pose.cc main.cpp
+         estimate_relative_pose.cpp
+     1>G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1158): warning C4251: 'google::LogMessage::LogStream::streambuf_' : class 'google::base_logging::LogStreamBuf' needs to have dll-interface to be used by clients of class 'google::LogMessage::LogStream'
+                 G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1088) : see declaration of 'google::base_logging::LogStreamBuf'
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(61): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(59) : while compiling class template member function 'bool Ransac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(67) : see reference to class template instantiation 'Ransac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+                 estimate_relative_pose.cpp(137) : see reference to function template instantiation 'std::unique_ptr<SampleConsensusEstimator<`anonymous-namespace'::RelativePoseEstimator>,std::default_delete<_Ty>> CreateAndInitializeRansacVariant<`anonymous-namespace'::RelativePoseEstimator>(const RansacType &,const RansacParameters &,const Estimator &)' being compiled
+                 with
+                 [
+                     _Ty=SampleConsensusEstimator<`anonymous-namespace'::RelativePoseEstimator>
+         ,            Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\prosac.h(63): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\prosac.h(61) : while compiling class template member function 'bool Prosac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(70) : see reference to class template instantiation 'Prosac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\random_sampler.h(70): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\random_sampler.h(62) : while compiling class template member function 'bool RandomSampler<FeatureCorrespondence>::Sample(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<_Ty,std::allocator<_Ty>> *)'
+                 with
+                 [
+                     _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(61) : see reference to class template instantiation 'RandomSampler<FeatureCorrespondence>' being compiled
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(59) : while compiling class template member function 'bool Ransac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(274): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(257) : while compiling class template member function 'bool Arrsac<Estimator>::Estimate(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,RelativePose *,RansacSummary *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(73) : see reference to class template instantiation 'Arrsac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(281): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(239): warning C4244: 'return' : conversion from 'const double' to 'int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(216) : while compiling class template member function 'int SampleConsensusEstimator<`anonymous-namespace'::RelativePoseEstimator>::ComputeMaxIterations(const double,const double,const double) const'
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(264) : see reference to function template instantiation 'int SampleConsensusEstimator<`anonymous-namespace'::RelativePoseEstimator>::ComputeMaxIterations(const double,const double,const double) const' being compiled
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(169): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(148) : while compiling class template member function 'int Arrsac<Estimator>::GenerateInitialHypothesisSet(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<RelativePose,std::allocator<RelativePose>> *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(260) : see reference to function template instantiation 'int Arrsac<Estimator>::GenerateInitialHypothesisSet(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<RelativePose,std::allocator<RelativePose>> *)' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(257) : while compiling class template member function 'bool Arrsac<Estimator>::Estimate(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,RelativePose *,RansacSummary *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::RelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(170): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(222): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(245): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+         estimate_twoview_info.cc
+     1>G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1158): warning C4251: 'google::LogMessage::LogStream::streambuf_' : class 'google::base_logging::LogStreamBuf' needs to have dll-interface to be used by clients of class 'google::LogMessage::LogStream'
+                 G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1088) : see declaration of 'google::base_logging::LogStreamBuf'
+     1>estimate_twoview_info.cc(159): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>estimate_twoview_info.cc(207): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+         estimate_uncalibrated_relative_pose.cc
+     1>G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1158): warning C4251: 'google::LogMessage::LogStream::streambuf_' : class 'google::base_logging::LogStreamBuf' needs to have dll-interface to be used by clients of class 'google::LogMessage::LogStream'
+                 G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1088) : see declaration of 'google::base_logging::LogStreamBuf'
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(61): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(59) : while compiling class template member function 'bool Ransac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(67) : see reference to class template instantiation 'Ransac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+                 estimate_uncalibrated_relative_pose.cc(165) : see reference to function template instantiation 'std::unique_ptr<SampleConsensusEstimator<`anonymous-namespace'::UncalibratedRelativePoseEstimator>,std::default_delete<_Ty>> CreateAndInitializeRansacVariant<`anonymous-namespace'::UncalibratedRelativePoseEstimator>(const RansacType &,const RansacParameters &,const Estimator &)' being compiled
+                 with
+                 [
+                     _Ty=SampleConsensusEstimator<`anonymous-namespace'::UncalibratedRelativePoseEstimator>
+         ,            Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\prosac.h(63): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\prosac.h(61) : while compiling class template member function 'bool Prosac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(70) : see reference to class template instantiation 'Prosac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\random_sampler.h(70): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\random_sampler.h(62) : while compiling class template member function 'bool RandomSampler<FeatureCorrespondence>::Sample(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<_Ty,std::allocator<_Ty>> *)'
+                 with
+                 [
+                     _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(61) : see reference to class template instantiation 'RandomSampler<FeatureCorrespondence>' being compiled
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\ransac.h(59) : while compiling class template member function 'bool Ransac<Estimator>::Initialize(void)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(274): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(257) : while compiling class template member function 'bool Arrsac<Estimator>::Estimate(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,UncalibratedRelativePose *,RansacSummary *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\create_and_initialize_ransac_variant.h(73) : see reference to class template instantiation 'Arrsac<Estimator>' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(281): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(239): warning C4244: 'return' : conversion from 'const double' to 'int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(216) : while compiling class template member function 'int SampleConsensusEstimator<`anonymous-namespace'::UncalibratedRelativePoseEstimator>::ComputeMaxIterations(const double,const double,const double) const'
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\sample_consensus_estimator.h(264) : see reference to function template instantiation 'int SampleConsensusEstimator<`anonymous-namespace'::UncalibratedRelativePoseEstimator>::ComputeMaxIterations(const double,const double,const double) const' being compiled
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(169): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(148) : while compiling class template member function 'int Arrsac<Estimator>::GenerateInitialHypothesisSet(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<UncalibratedRelativePose,std::allocator<UncalibratedRelativePose>> *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(260) : see reference to function template instantiation 'int Arrsac<Estimator>::GenerateInitialHypothesisSet(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,std::vector<UncalibratedRelativePose,std::allocator<UncalibratedRelativePose>> *)' being compiled
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+                 h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(257) : while compiling class template member function 'bool Arrsac<Estimator>::Estimate(const std::vector<FeatureCorrespondence,std::allocator<_Ty>> &,UncalibratedRelativePose *,RansacSummary *)'
+                 with
+                 [
+                     Estimator=`anonymous-namespace'::UncalibratedRelativePoseEstimator
+         ,            _Ty=FeatureCorrespondence
+                 ]
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(170): warning C4244: 'argument' : conversion from 'double' to 'const int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(222): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>h:\suvam\codes\five_point_solver_ceres\five_point_solver_ceres\arrsac.h(245): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+         main.cpp
+     1>G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1158): warning C4251: 'google::LogMessage::LogStream::streambuf_' : class 'google::base_logging::LogStreamBuf' needs to have dll-interface to be used by clients of class 'google::LogMessage::LogStream'
+                 G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1088) : see declaration of 'google::base_logging::LogStreamBuf'
+     1>main.cpp(148): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(149): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(150): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(151): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(152): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(252): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"H:\suvam\codes\Five_point_solver_ceres\x64\Release\Five_point_solver_ceres.exe" /INCREMENTAL:NO /NOLOGO "G:\ceres\glog-0.3.3\glog-0.3.3\Release\libglog.lib" G:\ceres\build_2013_glog\lib\Release\ceres.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"H:\suvam\codes\Five_point_solver_ceres\x64\Release\Five_point_solver_ceres.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"H:\suvam\codes\Five_point_solver_ceres\x64\Release\Five_point_solver_ceres.lib" /MACHINE:X64 x64\Release\eight_point_fundamental_matrix.obj
+         x64\Release\essential_matrix_utils.obj
+         x64\Release\estimate_relative_pose.obj
+         x64\Release\estimate_twoview_info.obj
+         x64\Release\estimate_uncalibrated_relative_pose.obj
+         x64\Release\five_point.obj
+         x64\Release\fundamental_matrix_util.obj
+         x64\Release\main.obj
+         x64\Release\pose_util.obj
+         x64\Release\random.obj
+         x64\Release\sequential_probability_ratio.obj
+         x64\Release\triangulation.obj
+         Generating code
+         Finished generating code
+         Five_point_solver_ceres.vcxproj -> H:\suvam\codes\Five_point_solver_ceres\x64\Release\Five_point_solver_ceres.exe
+     1>Done Building Project "H:\suvam\codes\Five_point_solver_ceres\Five_point_solver_ceres\Five_point_solver_ceres.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:01:28.07

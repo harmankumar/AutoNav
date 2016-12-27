@@ -1,0 +1,37 @@
+﻿Build started 9/2/2015 12:36:06 AM.
+     1>Project "H:\suvam\codes\Five_point_solver_ceres\Five_point_solver_ceres\Five_point_solver_ceres.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"G:\ceres\eigen-eigen" /IG:\ceres\include /I"G:\ceres\glog-0.3.3\glog-0.3.3\src\windows" /Zi /nologo /W3 /WX- /Od /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
+         main.cpp
+     1>G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1158): warning C4251: 'google::LogMessage::LogStream::streambuf_' : class 'google::base_logging::LogStreamBuf' needs to have dll-interface to be used by clients of class 'google::LogMessage::LogStream'
+                 G:\ceres\glog-0.3.3\glog-0.3.3\src\windows\glog/logging.h(1088) : see declaration of 'google::base_logging::LogStreamBuf'
+     1>main.cpp(148): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(149): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(150): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(151): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(152): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+     1>main.cpp(252): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"H:\suvam\codes\Five_point_solver_ceres\x64\Debug\Five_point_solver_ceres.exe" /INCREMENTAL /NOLOGO "G:\ceres\gflags-2.1.1\build\lib\Debug\gflags.lib" "G:\ceres\glog-0.3.3\glog-0.3.3\Debug\libglog.lib" "G:\ceres\build_2013_glog\lib\Debug\ceres-debug.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libspqrd.lib" G:\ceres\tbb43_20150424oss\lib\intel64\vc12\tbb.lib G:\ceres\tbb43_20150424oss\lib\intel64\vc12\tbbmalloc.lib "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libcholmodd.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libccolamdd.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libcamdd.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libcolamdd.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\libamdd.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\build\lib\Debug\suitesparseconfigd.lib" "G:\ceres\CXSparse-master\CXSparse-master\Lib\CXSparse.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\lapack_windows\x64\liblapack.lib" "G:\ceres\suitesparse-metis-for-windows-master\suitesparse-metis-for-windows-master\lapack_windows\x64\libblas.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"H:\suvam\codes\Five_point_solver_ceres\x64\Debug\Five_point_solver_ceres.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"H:\suvam\codes\Five_point_solver_ceres\x64\Debug\Five_point_solver_ceres.lib" /MACHINE:X64 x64\Debug\eight_point_fundamental_matrix.obj
+         x64\Debug\essential_matrix_utils.obj
+         x64\Debug\estimate_relative_pose.obj
+         x64\Debug\estimate_twoview_info.obj
+         x64\Debug\estimate_uncalibrated_relative_pose.obj
+         x64\Debug\five_point.obj
+         x64\Debug\fundamental_matrix_util.obj
+         x64\Debug\main.obj
+         x64\Debug\pose_util.obj
+         x64\Debug\random.obj
+         x64\Debug\sequential_probability_ratio.obj
+         x64\Debug\triangulation.obj
+         Five_point_solver_ceres.vcxproj -> H:\suvam\codes\Five_point_solver_ceres\x64\Debug\Five_point_solver_ceres.exe
+     1>Done Building Project "H:\suvam\codes\Five_point_solver_ceres\Five_point_solver_ceres\Five_point_solver_ceres.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.40
