@@ -10,9 +10,10 @@ typedef pair<int, int> floorpoint;
 
 vector<floorpoint> floorPoints;
 vector<floorpoint> floorPointsCoarse;
-set<floorpoint> boundaryPoints;
-const int WindowSize = 100;
-const int WindowSizeCoarse = 225;
+vector<floorpoint> floorPointsFiltered;
+map<int, int> boundaryPoints;
+const int WindowSize = 75;
+const int WindowSizeCoarse = 100;
 const int StepSize = 25;
 const float EMPTY_THRES = 0.4;
 
@@ -118,9 +119,11 @@ void mark(vector<floorpoint>& v) {
 }
 
 // Get yaw angle of bot
-// TODO: test
 double getZAngle(Point point, double imagewidth, double focalLength) {
-    double theta = atan((double)(point.x - imagewidth/2)/focalLength);
+    double x = (double)(point.x - imagewidth/2);
+    double y = (double)(imageheight/2 - point.y);
+    double theta = atan(x /(focalLength + y));    // height of bot approx. equal to distance from centre of mass
+    // atan chosen as return value in range [-pi/2, pi/2]
     return theta;
 }
 
@@ -212,81 +215,6 @@ floorpoint getMeanLargestComp(int num) {
     return make_pair((int)target_x, (int)target_y);
 }
 
-void checkGround(bool coarse) {
-    int N;
-    if(coarse) {
-        N = WindowSizeCoarse / StepSize;
-    }
-    else {
-        N = WindowSize / StepSize;
-    }
-    const int w = imagewidth / StepSize;
-    const int h = imageheight / StepSize;
-
-    const int FLOOR_DIFF_THRES = 15;
-    const int FLOOR_COLOR_THRES = 130;
-
-    int fCount[w][h];   // floor count dp in boxes
-    int nfCount[w][h];  // non-floor count dp in boxes
-    memset(fCount, -1, sizeof(fCount));
-    memset(nfCount, -1, sizeof(nfCount));
-
-    int countFloor = 0, countNFloor = 0;
-    int start_i, end_i, start_j, end_j;
-    Vec3b pixel_bgr; int pixel_b, pixel_g, pixel_r, pixel_avg;
-    // Count number of floor and non-floor pixels in boxes of image
-    for (int i = 0; i < w; i++) {
-        for (int j = 0; j < h; j++) {
-            countFloor = 0; countNFloor = 0;
-            start_i = i * StepSize; end_i = start_i + StepSize;
-            start_j = j * StepSize; end_j = start_j + StepSize;
-            for (int k = start_i; k < end_i; k++) {
-                for (int l = start_j; l < end_j; l++) {
-                    pixel_bgr = img.at<Vec3b>(l, k);
-                    pixel_b = (int)pixel_bgr.val[0];
-                    pixel_g = (int)pixel_bgr.val[1];
-                    pixel_r = (int)pixel_bgr.val[2];
-                    pixel_avg = (pixel_b + pixel_g + pixel_r)/3;
-                    if(pixel_b > FLOOR_COLOR_THRES and pixel_g > FLOOR_COLOR_THRES and pixel_r > FLOOR_COLOR_THRES and abs(pixel_b - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_g - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_r - pixel_avg) < FLOOR_DIFF_THRES) {
-                        countFloor++;
-                    }
-                    else {
-                        countNFloor++;
-                    }
-                }
-            }
-            fCount[i][j] = countFloor;
-            nfCount[i][j] = countNFloor;
-            // cout << countFloor << "," << countNFloor << " ";
-        }
-        // cout << endl;
-    }
-
-    // Find floor points in image
-    for (int i = 0; i < w-N; i++) {
-        for (int j = 0; j < h-N; j++) {
-            countFloor = 0; countNFloor = 0;
-            for (int k = i; k < i+N; k++) {
-                for (int l = j; l < j+N; l++) {
-                    countFloor += fCount[k][l];
-                    countNFloor += nfCount[k][l];
-                }
-            }
-            float floorRatio = ((float)countNFloor)/((float)countFloor + (float)countNFloor);
-            // cout << floorRatio << " ";
-            if(floorRatio < EMPTY_THRES) {
-                if(coarse) {
-                    floorPointsCoarse.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
-                }
-                else {
-                    floorPoints.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
-                }
-            }
-        }
-        // cout << endl;
-    }
-}
-
 void checkGroundHSI(bool coarse) {
     int N;
     if(coarse) {
@@ -298,7 +226,7 @@ void checkGroundHSI(bool coarse) {
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
-    const float HUE_THRES = 160;
+    const float HUE_THRES = 170;
     const float SAT_THRES = 40;
     const float INTENSITY_THRES = 150;
 
@@ -371,21 +299,115 @@ void checkGroundHSI(bool coarse) {
 
 // Get boundary points
 void getBoundaryPoints() {
-    const int Y_GAP = 10 * StepSize;
+    const int Y_GAP = 5 * StepSize;
+    const int ZERO_GAP = 5 * StepSize;
+    bool ignoreColumn = false;
     int xBound = floorPoints[0].first, yBound = floorPoints[0].second;
     // cout << "Floor points: " << endl;
     for(auto rit = floorPoints.rbegin(); rit != floorPoints.rend(); rit++) {
-        // cout << point.first << " " << point.second << endl;
-        if(rit->first != xBound) {
-            boundaryPoints.insert(make_pair(xBound, yBound));
+        // cout << rit->first << " " << rit->second << endl;
+        if(rit->first != xBound) {  // New column start
+            boundaryPoints[xBound] = yBound;   // Prev column added to boundary
+
+            if(imageheight - rit->second > ZERO_GAP) {
+                ignoreColumn = true;    // Ignore column if free space far from image bottom
+            }
+            else {
+                ignoreColumn = false;
+            }
+
             xBound = rit->first;
             yBound = rit->second;
+
         }
-        else {
-            if(rit->second < yBound and (yBound - rit->second < Y_GAP)) {
+        else {      // Old column
+            if((not ignoreColumn) and rit->second < yBound and (yBound - rit->second < Y_GAP)) {
                 yBound = rit->second;
             }
         }
+    }
+}
+
+void filterFloorPoints() {
+    for(auto point: floorPointsCoarse) {
+        if(point.second > boundaryPoints[point.first]) {
+            floorPointsFiltered.push_back(point);
+        }
+    }
+}
+
+void checkGround(bool coarse) {
+    int N;
+    if(coarse) {
+        N = WindowSizeCoarse / StepSize;
+    }
+    else {
+        N = WindowSize / StepSize;
+    }
+    const int w = imagewidth / StepSize;
+    const int h = imageheight / StepSize;
+
+    const int FLOOR_DIFF_THRES = 15;
+    const int FLOOR_COLOR_THRES = 130;
+
+    int fCount[w][h];   // floor count dp in boxes
+    int nfCount[w][h];  // non-floor count dp in boxes
+    memset(fCount, -1, sizeof(fCount));
+    memset(nfCount, -1, sizeof(nfCount));
+
+    int countFloor = 0, countNFloor = 0;
+    int start_i, end_i, start_j, end_j;
+    Vec3b pixel_bgr; int pixel_b, pixel_g, pixel_r, pixel_avg;
+    // Count number of floor and non-floor pixels in boxes of image
+    for (int i = 0; i < w; i++) {
+        for (int j = 0; j < h; j++) {
+            countFloor = 0; countNFloor = 0;
+            start_i = i * StepSize; end_i = start_i + StepSize;
+            start_j = j * StepSize; end_j = start_j + StepSize;
+            for (int k = start_i; k < end_i; k++) {
+                for (int l = start_j; l < end_j; l++) {
+                    pixel_bgr = img.at<Vec3b>(l, k);
+                    pixel_b = (int)pixel_bgr.val[0];
+                    pixel_g = (int)pixel_bgr.val[1];
+                    pixel_r = (int)pixel_bgr.val[2];
+                    pixel_avg = (pixel_b + pixel_g + pixel_r)/3;
+                    if(pixel_b > FLOOR_COLOR_THRES and pixel_g > FLOOR_COLOR_THRES and pixel_r > FLOOR_COLOR_THRES and abs(pixel_b - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_g - pixel_avg) < FLOOR_DIFF_THRES and abs(pixel_r - pixel_avg) < FLOOR_DIFF_THRES) {
+                        countFloor++;
+                    }
+                    else {
+                        countNFloor++;
+                    }
+                }
+            }
+            fCount[i][j] = countFloor;
+            nfCount[i][j] = countNFloor;
+            // cout << countFloor << "," << countNFloor << " ";
+        }
+        // cout << endl;
+    }
+
+    // Find floor points in image
+    for (int i = 0; i < w-N; i++) {
+        for (int j = 0; j < h-N; j++) {
+            countFloor = 0; countNFloor = 0;
+            for (int k = i; k < i+N; k++) {
+                for (int l = j; l < j+N; l++) {
+                    countFloor += fCount[k][l];
+                    countNFloor += nfCount[k][l];
+                }
+            }
+            float floorRatio = ((float)countNFloor)/((float)countFloor + (float)countNFloor);
+            // cout << floorRatio << " ";
+            if(floorRatio < EMPTY_THRES) {
+                if(coarse) {
+                    floorPointsCoarse.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
+                else {
+                    floorPoints.push_back(make_pair((i+N/2) * StepSize, (j+N/2) * StepSize) );
+                }
+            }
+        }
+        // cout << endl;
     }
 }
 
@@ -484,22 +506,6 @@ int main(int argc, char const *argv[])
 
     // Draw points on image
     cout << "No. of coarse floor points: " << floorPointsCoarse.size() << endl;
-    for(auto point: floorPointsCoarse) {
-        // cout << point;
-        circle(img, Point(point.first, point.second), 7, Scalar(0, 255, 0), -1);
-    }
-
-    // Mark connected components in points
-    mark(floorPointsCoarse);
-    cout << "Marked: " << ComponentNumber.size() << endl;
-    cout << "Number of components: " << numComponents << endl;
-
-    floorpoint target = getMeanLargestComp(numComponents);
-    // cout << target.first << " " << target.second << endl;
-    Point targetPoint(target.first, target.second);
-    cout << argv[1] << "-> angle = " << getZAngle(targetPoint, imagewidth, focalLength) << endl;
-
-    circle(img, targetPoint, 15, Scalar(0, 0, 255), -1);
 
     // Get Boundary points
     getBoundaryPoints();
@@ -512,6 +518,24 @@ int main(int argc, char const *argv[])
             line(img, Point(it->first, it->second), Point(itNext->first, itNext->second), Scalar(255, 0, 255), 5);
         }
     }
+
+    // Mark connected components in points
+    filterFloorPoints();
+    for(auto point: floorPointsFiltered) {
+        // cout << point;
+        circle(img, Point(point.first, point.second), 7, Scalar(0, 255, 0), -1);
+    }
+    mark(floorPointsFiltered);
+    cout << "Marked: " << ComponentNumber.size() << endl;
+    cout << "Number of components: " << numComponents << endl;
+
+    floorpoint target = getMeanLargestComp(numComponents);
+    // cout << target.first << " " << target.second << endl;
+    Point targetPoint(target.first, target.second);
+    cout << argv[1] << "-> angle = " << getZAngle(targetPoint, imagewidth, focalLength) << endl;
+
+    circle(img, targetPoint, 15, Scalar(0, 0, 255), -1);
+
 
     imwrite(argv[2], img);
 

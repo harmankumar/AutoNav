@@ -16,14 +16,14 @@ from exlcm import example_t
 
 def orient():
     compass = Orientation()
-    print compass.yaw
+    # print compass.yaw
     sys.exit(0)
 
 BOT_SPEED = 4000
 CUTOFF_DISTANCE = 1.0
-THRESHOLD_ANGLE = 0.1  # in radians
+THRESHOLD_ANGLE = 0.12  # in radians
 SLEEP_TIME = 0.05
-PROCESSING_INTERVAL = 0.5
+PROCESSING_INTERVAL = 0.4
 
 turnAngle = 0
 distanceToObstacle = 0
@@ -169,7 +169,6 @@ def main():
     camera.StartCapture()
     print "Done."
 
-
     start_time = time.time()
     counter = 0
 
@@ -182,22 +181,24 @@ def main():
             stopBot()  # Stop the bot during processing
             frame = camera.GrabNumPyImage('bgr')
             # TODO: Undistort frame
-            cv2.imwrite(str(counter) + ".jpg", frame)
-            print "Done write"
-            # TODO Delete previous image
+            cv2.imwrite("share/" + str(counter) + ".jpg", frame)
+            print "Written to share/" + str(counter) + ".jpg"
             msg = example_t()
             msg.currImage = counter
             # TODO add focal length to message / result
             lc.publish("PROCESSING_SEND", msg.encode())
-			print "published by gc.py"
+            print "published by gc.py"
+            # TODO Delete previous image
             lc.handle()     # Recieve angle
             start_time = time.time()    # Restart count
 
         counter += 1
         global turnAngle
-        ANGLE_THRES = 0.1
-        if(abs(turnAngle - turnAngle_Ref) > ANGLE_THRES):    # Turn bot (sharply) in given direction
-            rotate(turnAngle * 180/math.pi)
+        ANGLE_THRES = 0.13
+        angle_to_rotate = turnAngle 
+        print "Angle to rotate:", angle_to_rotate
+        if(abs(angle_to_rotate) > ANGLE_THRES):    # Turn bot (sharply) in given direction
+            rotate(angle_to_rotate * 180 / math.pi)
         else:
             moveForward()
 

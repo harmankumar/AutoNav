@@ -11,12 +11,15 @@ using namespace cv;
 using namespace std;
 typedef pair<int, int> floorpoint;
 
+int currImage;
+
 vector<floorpoint> floorPoints;
 vector<floorpoint> floorPointsCoarse;
-set<floorpoint> boundaryPoints;
-const int WindowSize = 300;
-const int WindowSizeCoarse = 500;
-const int StepSize = 40;
+vector<floorpoint> floorPointsFiltered;
+map<int, int> boundaryPoints;
+const int WindowSize = 75;
+const int WindowSizeCoarse = 100;
+const int StepSize = 25;
 const float EMPTY_THRES = 0.4;
 
 map<floorpoint, int> ComponentNumber;
@@ -25,9 +28,7 @@ int numComponents = 0;
 Mat img;
 int imagewidth, imageheight;
 Mat img_hsi;
-int currImage;
 
-// construct HSI image from RGB image
 void constructHSIImage() {
     img_hsi = Mat(img.rows, img.cols, img.type());
 
@@ -75,6 +76,12 @@ void constructHSIImage() {
     imwrite("floor_hsi.jpg", img_hsi);
 }
 
+
+// bool isNeighbour(Point a, Point b)
+// {
+//     return (abs(a.x - b.x) <= StepSize or abs(a.y - b.y) <= StepSize);
+// }
+
 // dfs through points in image
 void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoints) {
     int dx[4] = {0, 0, StepSize, -StepSize};
@@ -93,6 +100,7 @@ void dfs(floorpoint currPoint, set<floorpoint>& visited, set<floorpoint>& allPoi
         if(allPoints.count(newPoint) and (!visited.count(newPoint)))
             dfs(newPoint, visited, allPoints);
     }
+
 }
 
 
@@ -101,6 +109,7 @@ void mark(vector<floorpoint>& v) {
     set<floorpoint> allPoints;
     set<floorpoint> visited;
 
+    assert(ComponentNumber.empty());
     numComponents = 0;
 
     for(auto it: v)
@@ -115,13 +124,14 @@ void mark(vector<floorpoint>& v) {
     }
 }
 
-
 // Get yaw angle of bot
-double getZAngle(floorpoint point, double imagewidth, double focalLength) {
-    double theta = atan((double)(point.first - imagewidth/2)/focalLength);
+double getZAngle(Point point, double imagewidth, double focalLength) {
+    double x = (double)(point.x - imagewidth/2);
+    double y = (double)(imageheight/2 - point.y);
+    double theta = atan(x /(focalLength + y));    // height of bot approx. equal to distance from centre of mass
+    // atan chosen as return value in range [-pi/2, pi/2]
     return theta;
 }
-
 
 // Mean point of largest component - to follow
 floorpoint getMeanLargestComp(int num) {
@@ -131,6 +141,7 @@ floorpoint getMeanLargestComp(int num) {
         numPoints[i] = 0;
     }
     int maxComponent, maxPoints;
+    assert(not ComponentNumber.empty());
     for(auto iterator = ComponentNumber.begin(); iterator != ComponentNumber.end(); iterator++) {
         // cout << iterator->second;
         numPoints[iterator->second]++;
@@ -180,7 +191,7 @@ floorpoint getMeanLargestComp(int num) {
 
     /* Draw mean path */
     auto it = meanPath.begin();
-    uint pathCount = 0;
+    int pathCount = 0;
     const int SKIP = 3;
     while(it != meanPath.end()) {
         // // Draw points
@@ -210,9 +221,14 @@ floorpoint getMeanLargestComp(int num) {
     return make_pair((int)target_x, (int)target_y);
 }
 
-
-// sliding window algorithm over HSI image of ground for free space modelling
 void checkGroundHSI(bool coarse) {
+    if(coarse) {
+        assert(floorPointsCoarse.empty());
+    }
+    else {
+        assert(floorPoints.empty());
+    }
+
     int N;
     if(coarse) {
         N = WindowSizeCoarse / StepSize;
@@ -223,7 +239,7 @@ void checkGroundHSI(bool coarse) {
     const int w = imagewidth / StepSize;
     const int h = imageheight / StepSize;
 
-    const float HUE_THRES = 160;
+    const float HUE_THRES = 170;
     const float SAT_THRES = 40;
     const float INTENSITY_THRES = 150;
 
@@ -244,16 +260,17 @@ void checkGroundHSI(bool coarse) {
             start_j = j * StepSize; end_j = start_j + StepSize;
             for (int k = start_i; k < end_i; k++) {
                 for (int l = start_j; l < end_j; l++) {
-                    // pixel_bgr = img.at<Vec3b>(l, k);
-                    // pixel_b = (int)pixel_bgr.val[0];
-                    // pixel_g = (int)pixel_bgr.val[1];
-                    // pixel_r = (int)pixel_bgr.val[2];
+                    pixel_bgr = img.at<Vec3b>(l, k);
+                    pixel_b = (int)pixel_bgr.val[0];
+                    pixel_g = (int)pixel_bgr.val[1];
+                    pixel_r = (int)pixel_bgr.val[2];
                     pixel_hsi = img_hsi.at<Vec3b>(l, k);
-                    pixel_h = pixel_hsi.val[0];
-                    pixel_s = pixel_hsi.val[1];
-                    pixel_i = pixel_hsi.val[2];
+                    pixel_i = (int)pixel_hsi.val[0];
+                    pixel_s = (int)pixel_hsi.val[1];
+                    pixel_h = (int)pixel_hsi.val[2];
+                    // cout << pixel_h << " " << pixel_s << " " << pixel_i << " " << "\t";
                     const int FLOOR_COLOR_THRES = 150;
-                    if((pixel_s < SAT_THRES) /*and (pixel_r > FLOOR_COLOR_THRES)*/) {
+                    if(/* (pixel_s < SAT_THRES) and */ (pixel_h > HUE_THRES)) {
                         countFloor++;
                     }
                     else {
@@ -295,20 +312,41 @@ void checkGroundHSI(bool coarse) {
 
 // Get boundary points
 void getBoundaryPoints() {
-    const int Y_GAP = 10 * StepSize;
+    assert(boundaryPoints.empty());
+    const int Y_GAP = 5 * StepSize;
+    const int ZERO_GAP = 5 * StepSize;
+    bool ignoreColumn = false;
     int xBound = floorPoints[0].first, yBound = floorPoints[0].second;
     // cout << "Floor points: " << endl;
     for(auto rit = floorPoints.rbegin(); rit != floorPoints.rend(); rit++) {
-        // cout << point.first << " " << point.second << endl;
-        if(rit->first != xBound) {
-            boundaryPoints.insert(make_pair(xBound, yBound));
+        // cout << rit->first << " " << rit->second << endl;
+        if(rit->first != xBound) {  // New column start
+            boundaryPoints[xBound] = yBound;   // Prev column added to boundary
+
+            if(imageheight - rit->second > ZERO_GAP) {
+                ignoreColumn = true;    // Ignore column if free space far from image bottom
+            }
+            else {
+                ignoreColumn = false;
+            }
+
             xBound = rit->first;
             yBound = rit->second;
+
         }
-        else {
-            if(rit->second < yBound and (yBound - rit->second < Y_GAP)) {
+        else {      // Old column
+            if((not ignoreColumn) and rit->second < yBound and (yBound - rit->second < Y_GAP)) {
                 yBound = rit->second;
             }
+        }
+    }
+}
+
+void filterFloorPoints() {
+    assert(floorPointsFiltered.empty());
+    for(auto point: floorPointsCoarse) {
+        if(point.second > boundaryPoints[point.first]) {
+            floorPointsFiltered.push_back(point);
         }
     }
 }
@@ -389,29 +427,51 @@ int main(int argc, char const *argv[])
         // Convert to hsv color space
         cvtColor(img, img_hsi, CV_BGR2HSV);
 
-        checkGroundHSI(true);
         checkGroundHSI(false);
-        mark(floorPointsCoarse);
+        checkGroundHSI(true);
 
         if(!floorPointsCoarse.empty()) {
             assert(not floorPointsCoarse.empty());
             getBoundaryPoints();
-            data.distance = imageheight - findDistance();
-            floorpoint target = getMeanLargestComp(numComponents);
-            data.angle = getZAngle(target, imagewidth, focalLength);
-            cerr << "Angle sent: " << data.angle << endl;
-            i++;
+            filterFloorPoints();
+            mark(floorPointsFiltered);
+            if(!floorPointsFiltered.empty()) {
+                data.distance = imageheight - findDistance();
+                floorpoint target = getMeanLargestComp(numComponents);
+                Point targetPoint(target.first, target.second);
+                circle(img, targetPoint, 15, Scalar(0, 0, 255), -1);
+                data.angle = getZAngle(targetPoint, imagewidth, focalLength);
+                cerr << "Angle sent: " << data.angle << endl;
+                i++;                
+            }
+            else {
+                data.angle = 0;
+                cerr << "No floor points found" << endl;
+            }
         }
         else {
             data.angle = 0;
             cerr << "No floor points found" << endl;
         }
+
+        // Draw floorpoints on image
+        for(auto point: floorPointsFiltered) {
+            circle(img, Point(point.first, point.second), 7, Scalar(0, 255, 0), -1);
+        }
+
+        imwrite("share/" + to_string(currImage) + "-processed.jpg", img);
         lcm.publish("PROCESSING_RECEIVE", &data);
      }
       else {
           cerr << "File not found" << endl;
       }
 
+    floorPoints.clear();
+    floorPointsCoarse.clear();
+    floorPointsFiltered.clear();
+    boundaryPoints.clear();
+    ComponentNumber.clear();
+    numComponents = 0;
     }
 
     return 0;
