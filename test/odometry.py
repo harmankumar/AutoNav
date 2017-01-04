@@ -116,6 +116,11 @@ def getXY():
     Y = distance * math.cos(theta)
     return (X,Y)
     
+def moveTowardsXY(x,y):
+    angle = math.atan(x/y)
+    dist = math.sqrt(x*x + y*y)
+    rotate(angle)
+    moveDistance(1,dist)
 
 def rotate(angle):
     """
@@ -142,16 +147,17 @@ def rotate(angle):
     cmd.stop()
     cmd.stop()
 
-# def main():
-#     init()
-#     #initleft = readMotorTicks()[0]
-#     while(True):
-#     	print mc.getYaw()
-#      #print retval
-#      #temp = readMotorTicks()
-#      #print (temp[0]- initleft) * TICK_TO_DIST
-#     #moveDistance(1,3)
-#     # rotate(1,90)
+def main():
+    init()
+    #initleft = readMotorTicks()[0]
+    # while(True):
+    	# print mc.getYaw()
+     #print retval
+     #temp = readMotorTicks()
+     #print (temp[0]- initleft) * TICK_TO_DIST
+    #moveDistance(1,3)
+    # rotate(1,90)
+    moveTowardsXY(3,3)
 
 
 if __name__ == '__main__':
