@@ -26,6 +26,10 @@ TICK_TO_DIST = 2 * math.pi * WHEEL_RADIUS / ENC_TICKS_360
 angleDelta = BOT_SPEED * .001
 DELTA = 0.0000
 
+initLeft=0
+initRight=0
+WHEEL_BASE = 1
+
 host = ni.ifaddresses('wlan0')[2][0]['addr']
 # print ip  # should print "192.168.100.37
 # Note that the IP Address and Port in this script and the script on the Mobile Phone should match.
@@ -100,6 +104,18 @@ def moveDistance(direction, distance):
     cmd.stop()
     cmd.stop()
 
+def getXY():
+    global initLeft
+    global initRight
+    temp = readMotorTicks()
+    left = temp[0]  - initLeft
+    right = temp[1] - initRight
+    distance = (left+right) * TICK_TO_DIST /2.0
+    theta = (left - right) * TICK_TO_DIST / WHEEL_BASE
+    X = distance * math.sin(theta)
+    Y = distance * math.cos(theta)
+    return (X,Y)
+    
 
 def rotate(angle):
     """
