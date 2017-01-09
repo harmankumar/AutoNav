@@ -24,11 +24,14 @@ public:
   double e;          // affine parameter
   int width;         // image width
   int height;        // image height
+  int hout;          // Image Height out
+  int wout;          // Image Width out
   double invdet;
+  double focal;
   CVec2Img warp;     // Warping matrix
 
   FishOcam() {}
-
+  
   void init(const std::string & calibFile) {
     FILE *f = fopen(calibFile.c_str(), "rb");
 
@@ -71,6 +74,8 @@ public:
     fclose(f);
 
     invdet = 1 / (c - d*e); // 1/det(A), where A = [c,d;e,1] as in the Matlab file
+    wout = width;
+    createPerspectiveWarp(width, height, width, true);
   }
 
   CVec3d cam2world(const CVec2d & f) {
@@ -127,8 +132,7 @@ public:
     return res;
   }
 
-  void createPerspectiveWarp(int & hout, double & hfov, double & vfov, double & focal,
-    const int win, const int hin, const int wout, const bool crop) {
+  void createPerspectiveWarp(const int win, const int hin, const int wout, const bool crop) {
     CVec3d wbase, wright, wup;
 
     if (crop) {
@@ -232,12 +236,13 @@ public:
         assert(warp.arr[y][x].x >= 0);
       }
     }
-    hfov = acos((wbase + wup / 2).Unit() * (wbase + wup / 2 + wright).Unit());
-    vfov = acos((wbase + wright / 2).Unit() * (wbase + wright / 2 + wup).Unit());
+    double hfov = acos((wbase + wup / 2).Unit() * (wbase + wup / 2 + wright).Unit());
+    double vfov = acos((wbase + wright / 2).Unit() * (wbase + wright / 2 + wup).Unit());
     focal = (wout > hout ?( 0.5 *wout )/ tan(hfov / 2) : (0.5 *hout) / tan(vfov / 2));
   }
 
   void WarpImage(cv::Mat &input, cv::Mat&output) {
+    output = cv::Mat(cv::Size(wout, hout), CV_8UC3);
     assert(output.rows == warp.rows);
     assert(output.cols == warp.cols);
     for (int i = 0; i < warp.rows; i++) {

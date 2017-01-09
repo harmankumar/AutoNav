@@ -12,16 +12,12 @@ int main(int argc, char const *argv[]) {
   std::string s = "calib_results_flycap.txt";
   FishOcam f;
   f.init(s);
-  int hout;
-  const int wout = f.width;
-  double hfov, vfov, focal;
-  f.createPerspectiveWarp(hout, hfov, vfov, focal, 1280, 1024, 1280, true);
-  std::cout << "Focal is " << focal << "\n";
-  std::cout << "Hout is " << hout << "\n";
-  Size S = Size(wout, hout);
+  std::cout << "Focal is " << f.focal << "\n";
+  std::cout << "Wout(from config file) is " << f.wout << "\n";
+  std::cout << "Hout is " << f.hout << "\n";
+  Size S = Size(f.wout, f.hout);
   Mat image = imread(argv[1], CV_LOAD_IMAGE_COLOR);
-  Mat image2(Size(wout, hout), CV_8UC3);
-
+  Mat image2;
   f.WarpImage(image, image2);   // undistort image
 
   cv::imwrite(argv[2], image2);
